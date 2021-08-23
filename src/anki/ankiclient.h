@@ -122,10 +122,8 @@ public:
     AnkiReply *getDeckNames();
     AnkiReply *getModelNames();
     AnkiReply *getFieldNames(const QString &model);
-    AnkiReply *notesAddable (const QList<Term *>        &terms);
-    AnkiReply *notesAddable (const QList<const Kanji *> &kanjiList);
-    AnkiReply *addNote      (const Term  *term);
-    AnkiReply *addNote      (const Kanji *kanji);
+    AnkiReply *notesAddable (const QList<SubtitleExtract *>        &terms);
+    AnkiReply *addNote      (const SubtitleExtract  *term);
     AnkiReply *openBrowse   (const QString &deck, const QString &query);
 
 Q_SIGNALS:
@@ -157,20 +155,12 @@ private:
 
     AnkiReply *requestStringList(const QString &action, const QJsonObject &params = QJsonObject());
 
-    QJsonObject createAnkiNoteObject(const Term  &term,  const bool media = false);
-    QJsonObject createAnkiNoteObject(const Kanji &kanji, const bool media = false);
+    QJsonObject createAnkiNoteObject(const SubtitleExtract  &term,  const bool media = false);
 
     void     buildCommonNote (QJsonObject                  &note,
                               QJsonObject                  &fieldObj, 
                               const QJsonObject            &configFields,
                               const bool                    media);
-    QString  buildFrequencies(const QList<Frequency>       &freq);
-    void     buildPitchInfo  (const QList<Pitch>           &pitches,
-                              QString &pitch, QString &pitchGraph, QString &pitchPosition);
-    QString  buildGlossary   (const QList<TermDefinition>  &definitions);
-    QString  buildGlossary   (const QList<KanjiDefinition> &definitions);
-    QString &accumulateTags  (const QList<Tag>             &tags,         
-                              QString                      &tagStr);
 };
 
 #endif // ANKICLIENT_H

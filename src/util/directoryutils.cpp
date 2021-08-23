@@ -27,15 +27,13 @@
     #define CONFIG_PATH "config"
 #elif __linux__
     #define BASE_DIR getenv("HOME")
-    #define CONFIG_PATH "/.config/memento/"
+    #define CONFIG_PATH "/.config/memento-french/"
 #elif __APPLE__
     #define BASE_DIR getenv("HOME")
-    #define CONFIG_PATH "/.config/memento/"
+    #define CONFIG_PATH "/.config/memento-french/"
 #else
     #error "OS not supported"
 #endif
-
-#define DICTIONARY_DIR "dict"
 
 QString DirectoryUtils::getProgramDirectory()
 {
@@ -62,14 +60,14 @@ QString DirectoryUtils::getGlobalConfigDir()
     return getConfigDir();
 }
 
-QString DirectoryUtils::getDictionaryDir()
+QString DirectoryUtils::getDictionaryFile()
 {
-    return getConfigDir() + DICTIONARY_DIR + SLASH;
+    return getConfigDir() + DICT_FILE;
 }
 
-QString DirectoryUtils::getDictionaryDB()
+QString DirectoryUtils::getDictionaryCssFile()
 {
-    return getDictionaryDir() + DICT_DB_FILE;
+    return getConfigDir() + DICT_FILE + ".css";
 }
 
 QString DirectoryUtils::getMpvInputConfig()

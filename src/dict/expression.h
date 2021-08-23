@@ -22,92 +22,39 @@
 #define EXPRESSION_H
 
 #include <QString>
-#include <QStringList>
-#include <QVariant>
+#include <QColor>
+#include <QList>
 
-struct Tag
-{
-    QString name;
-    QString category;
-    QString notes;
-    int     order;
-    int     score;
+struct SyntaxInfo {
+    QString partOfSpeech;
+    QString lemma;
+    QString morphosyntacticTag;
+};
 
-    bool operator==(const Tag &lhs)
-    {
-        return name == lhs.name && 
-               category == lhs.category &&
-               notes == lhs.notes &&
-               order == lhs.order && 
-               score == lhs.score;
-    }
-} typedef Tag;
+struct DictEntry {
+    QList<SyntaxInfo> syntaxInfos;
+    QList<QString> definitions;
+};
 
-struct Frequency
-{
-    QString         dictionary;
-    uint64_t        freq;
-} typedef Frequency;
+struct SubtitleCharColors {
+    QColor fgColor;
+    QColor bgColor;
+};
 
-struct Pitch
-{
-    QString         dictionary;
-    QStringList     mora;
-    QList<uint8_t>  position;
-} typedef Pitch;
+struct SubtitlePhrase {
+    int start;
+    int stop;
+    DictEntry *dictEntry;
+};
 
-struct TermDefinition
-{
-    QString     dictionary;
-    QList<Tag>  tags;
-    QList<Tag>  rules;
-    QStringList glossary;
-    int         score;
-} typedef TermDefinition;
+struct SubtitleExtract {
+    QString subtitleText;
+    SubtitlePhrase phrase;
+};
 
-struct Term
-{
-    Term() : score(0) {}
-
-    QString                 expression;
-    QString                 reading;
-    QList<Tag>              tags;
-    QList<Pitch>            pitches;
-    QList<TermDefinition>   definitions;
-    QList<Frequency>        frequencies;
-    int                     score;
-
-    /* Cloze values will be set outside of database manager */
-    QString                 sentence;
-    QString                 clozeBody;
-    QString                 clozePrefix;
-    QString                 clozeSuffix;
-} typedef Term;
-
-struct KanjiDefinition
-{
-    QString                    dictionary;
-    QStringList                onyomi;
-    QStringList                kunyomi;
-    QStringList                glossary;
-    QList<Tag>                 tags;
-    QList<QPair<Tag, QString>> stats;
-    QList<QPair<Tag, QString>> clas;
-    QList<QPair<Tag, QString>> code;
-    QList<QPair<Tag, QString>> index;
-} typedef KanjiDefinition;
-
-struct Kanji
-{
-    QString                character;
-    QList<KanjiDefinition> definitions;
-    QList<Frequency>       frequencies;
-
-    /* Cloze values will be set outside of database manager */
-    QString                 sentence;
-    QString                 clozeBody;
-    QString                 clozePrefix;
-    QString                 clozeSuffix;
-} typedef Kanji;
+struct SubtitleInfo {
+    std::vector<SubtitleCharColors> charColors;
+    std::vector<SubtitlePhrase> phrases;
+};
 
 #endif // EXPRESSION_H

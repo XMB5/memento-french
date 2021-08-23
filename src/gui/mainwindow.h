@@ -69,7 +69,7 @@ private Q_SLOTS:
     void updateSubScale(const double inc);
     void moveSubtitles(const double inc);
     void setTracks(QList<const Track *> tracks);
-    void setTerms(const QList<Term *> *terms);
+    void setTerms(const QList<SubtitleExtract *> *terms);
     void updateAnkiProfileMenu();
     void setDefinitionWidgetLocation();
     void deleteDefinitionWidget();

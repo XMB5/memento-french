@@ -24,26 +24,16 @@ endif()
 
 # Find Qt
 if(UNIX AND NOT APPLE)
-	find_package(Qt5 COMPONENTS Widgets Network DBus REQUIRED)
+	find_package(Qt5 COMPONENTS Widgets WebEngineWidgets Network DBus REQUIRED)
 elseif(UNIX AND APPLE)
-	find_package(Qt5 COMPONENTS Widgets Network REQUIRED)
+	find_package(Qt5 COMPONENTS Widgets WebEngineWidgets Network REQUIRED)
 elseif(WIN32)
-	find_package(Qt5 COMPONENTS Widgets Network REQUIRED)
-endif()
-
-# OS X Links the non-brew versions
-if(UNIX AND APPLE)
-	set(SQLITE "/usr/local/opt/sqlite3/lib/libsqlite3.dylib")
-	set(MECAB "/usr/local/opt/mecab/lib/libmecab.dylib")
-else()
-	find_library(SQLITE sqlite3)
-	find_library(MECAB mecab)
+	find_package(Qt5 COMPONENTS Widgets WebEngineWidgets Network REQUIRED)
 endif()
 
 # Other dependencies
 find_library(MPV_LIB mpv)
-find_library(JSONC json-c)
-find_library(LIBZIP zip)
+find_package(ZLIB REQUIRED)
 
 # Find ffmpeg
 find_package(PkgConfig REQUIRED)

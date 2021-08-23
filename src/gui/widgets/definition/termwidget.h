@@ -37,8 +37,7 @@ class TermWidget : public QWidget
     Q_OBJECT
 
 public:
-    TermWidget(const Term               *term, 
-               AnkiClient               *client, 
+    TermWidget(const SubtitleExtract    *term,
                const QList<AudioSource> *sources,
                QWidget                  *parent = 0);
     ~TermWidget();
@@ -46,7 +45,7 @@ public:
     void setAddable(bool value);
 
 Q_SIGNALS:
-    void kanjiSearched(const Kanji *kanji);
+    void kanjiSearched(const SubtitleExtract *kanji);
 
 private Q_SLOTS:
     void addNote();
@@ -57,18 +56,10 @@ private Q_SLOTS:
 
 private:
     Ui::TermWidget           *m_ui;
-    const Term               *m_term;
-    AnkiClient               *m_client;
+    const SubtitleExtract    *m_term;
     const QList<AudioSource> *m_sources;
 
-    FlowLayout  *m_layoutTermTags;
-    FlowLayout  *m_layoutFreqTags;
-    QVBoxLayout *m_layoutPitches;
-    QVBoxLayout *m_layoutGlossary;
-
-    void setTerm(const Term &term);
-    inline QString generateJishoLink(const QString &word);
-    inline bool isKanji(const QString &ch);
+    void setTerm(const SubtitleExtract &term);
 };
 
 #endif // TERMWIDGET_H

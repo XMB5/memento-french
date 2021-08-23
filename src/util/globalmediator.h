@@ -28,6 +28,7 @@ class PlayerAdapter;
 class AnkiClient;
 class SubtitleListWidget;
 class AudioPlayer;
+class FrenchProcessor;
 class QWidget;
 
 class QKeyEvent;
@@ -35,7 +36,7 @@ class QWheelEvent;
 class QMouseEvent;
 
 struct Track;
-struct Term;
+struct SubtitleExtract;
 
 class GlobalMediator : public QObject
 {
@@ -53,6 +54,7 @@ public:
     AnkiClient         *getAnkiClient()         const;
     SubtitleListWidget *getSubtitleListWidget() const;
     AudioPlayer        *getAudioPlayer()        const;
+    FrenchProcessor    *getFrenchProcessor()    const;
 
     /* Mediator does not take ownership */
     GlobalMediator *setDictionary   (Dictionary         *dictionary);
@@ -61,6 +63,7 @@ public:
     GlobalMediator *setAnkiClient   (AnkiClient         *client);
     GlobalMediator *setSubtitleList (SubtitleListWidget *subList);
     GlobalMediator *setAudioPlayer  (AudioPlayer        *audioPlayer);
+    GlobalMediator *setFrenchProcessor (FrenchProcessor *frenchProcessor);
 
 Q_SIGNALS:
     /* Message Box Signals */
@@ -132,7 +135,7 @@ Q_SIGNALS:
     void requestSetSubtitleVisibility(const bool value) const;
 
     /* Subtitle Widget Signals */
-    void termsChanged(const QList<Term *> *terms) const;
+    void termsChanged(const QList<SubtitleExtract *> *terms) const;
     void subtitleExpired() const;
 
     /* Definition Signals */
@@ -161,6 +164,7 @@ private:
     QWidget            *m_playerWidget;
     SubtitleListWidget *m_subList;
     AudioPlayer        *m_audioPlayer;
+    FrenchProcessor    *m_frenchProcessor;
 
     GlobalMediator(QObject *parent = nullptr);
 };

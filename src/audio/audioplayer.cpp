@@ -32,6 +32,7 @@
 #include <QNetworkReply>
 #include <QThreadPool>
 #include <QFileInfo>
+#include <QProcess>
 
 AudioPlayer::AudioPlayer(QObject *parent) : QObject(parent)
 {
@@ -101,81 +102,61 @@ bool AudioPlayer::playFile(const QTemporaryFile *file)
     return true;
 }
 
-AudioPlayerReply *AudioPlayer::playAudio(QString url, QString hash)
+AudioPlayerReply *AudioPlayer::playAudio(QString text, QString lang, QString tld)
 {
     /* Check if the file exists */
     m_fileLock.lock();
-    QTemporaryFile *file = m_files[url];
+    QString cacheKey = text + '\x00' + lang + '\x00' + tld;  // null bytes are allowed in QString
+    QTemporaryFile *file = m_files[cacheKey];
     if (file)
     {
-        if (FileUtils::calculateMd5(file) != hash)
-            playFile(file);
+        playFile(file);
         m_fileLock.unlock();
         return nullptr;
     }
     m_fileLock.unlock();
 
-    /* File does not exist so fetch it */
-    AudioPlayerReply *audioReply = new AudioPlayerReply;
-    QNetworkReply    *reply      = m_manager->get(QNetworkRequest(QUrl(url)));
-    connect(reply, &QNetworkReply::sslErrors, reply, qOverload<>(&QNetworkReply::ignoreSslErrors)); // God help me
-    connect(reply, &QNetworkReply::finished,  this,
-        [=] {
-            QTemporaryFile *file = nullptr;
-            bool            res  = false;
+    auto *audioReply = new AudioPlayerReply;
 
-            if (reply->error() != QNetworkReply::NetworkError::NoError)
-            {
-                qDebug() << reply->errorString();
-                goto cleanup;
-            }
-                
+    // download audio
+    file = new QTemporaryFile;
+    // need to open temporary file to create it (otherwise fileName() will return empty string)
+    if (!file->open()) {
+        throw std::runtime_error("failed to open temporary file");
+    }
+    file->close();
 
-            if (!reply->open(QIODevice::ReadOnly))
-            {
-                qDebug() << "Could not open audio reply";
-                goto cleanup;
-            }
+    QProcess *process = new QProcess;
 
-            /* Put the audio in a new temp file */
-            file = new QTemporaryFile;
-            if (!file->open())
-            {
-                qDebug() << "Could not open temp file";
-                goto cleanup;
-            }
-            file->write(reply->readAll());
-            file->close();
-
-            /* Add the file to the cache */
+    connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), [=](int statusCode, QProcess::ExitStatus exitStatus) {
+        if (statusCode == 0 && exitStatus == QProcess::NormalExit) {
+            // add to cache
             m_fileLock.lock();
-            delete m_files[url];
-            m_files[url] = file;
-            
-            /* Check the hash */
-            if (FileUtils::calculateMd5(file) == hash)
-            {
-                m_fileLock.unlock();
-                goto cleanup;
-            }
+            m_files[cacheKey] = file;
 
-            /* Play the file */
-            if (!playFile(file))
-            {
-                qDebug() << "Could not play audio file";
-                m_fileLock.unlock();
-                goto cleanup;
-            }
-            
+            bool res = this->playFile(file);
             m_fileLock.unlock();
-
-            res = true;            
-        cleanup:
             Q_EMIT audioReply->result(res);
-            reply->deleteLater();
-            audioReply->deleteLater();
+        } else {
+            qDebug() << "process failed with status code" << statusCode << "exit status" << exitStatus << "stderr" << process->readAllStandardError();
+            Q_EMIT audioReply->result(false);
         }
-    );
+
+        process->deleteLater();
+        audioReply->deleteLater();
+    });
+    connect(process, &QProcess::errorOccurred, [=](QProcess::ProcessError error) {
+        if (error == QProcess::FailedToStart) {
+            qDebug() << "process failed to start" << process->errorString();
+            Q_EMIT audioReply->result(false);
+            audioReply->deleteLater();
+            process->deleteLater();
+        }
+    });
+    QStringList args;
+    args << "--lang" << lang << "--nocheck" << "--tld" << tld << "--output" << file->fileName() << "--" << text;
+    qDebug() << "run gtts-cli" << args;
+    process->start("gtts-cli", args);
 
     return audioReply;
 }

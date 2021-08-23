@@ -33,7 +33,7 @@
     #error "OS not supported"
 #endif
 
-#define DICT_DB_FILE        "dictionaries.sqlite"
+#define DICT_FILE        "fren.dict"
 #define MPV_INPUT_CONF_FILE "input.conf"
 
 class DirectoryUtils
@@ -42,8 +42,8 @@ public:
     static QString getProgramDirectory();
     static QString getConfigDir();
     static QString getGlobalConfigDir();
-    static QString getDictionaryDir();
-    static QString getDictionaryDB();
+    static QString getDictionaryFile();
+    static QString getDictionaryCssFile();
     static QString getMpvInputConfig();
     
 private:

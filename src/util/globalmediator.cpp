@@ -30,6 +30,7 @@ GlobalMediator::GlobalMediator(QObject *parent) : QObject(parent)
     m_playerWidget = nullptr;
     m_subList      = nullptr;
     m_audioPlayer  = nullptr;
+    m_frenchProcessor = nullptr;
 }
 
 GlobalMediator *GlobalMediator::createGlobalMedaitor()
@@ -73,6 +74,10 @@ AudioPlayer *GlobalMediator::getAudioPlayer() const
     return m_audioPlayer;
 }
 
+FrenchProcessor *GlobalMediator::getFrenchProcessor() const {
+    return m_frenchProcessor;
+}
+
 GlobalMediator *GlobalMediator::setDictionary(Dictionary *dictionary)
 {
     m_dictionary = dictionary;
@@ -106,5 +111,10 @@ GlobalMediator *GlobalMediator::setSubtitleList(SubtitleListWidget *subList)
 GlobalMediator *GlobalMediator::setAudioPlayer(AudioPlayer *audioPlayer)
 {
     m_audioPlayer = audioPlayer;
+    return m_mediator;
+}
+
+GlobalMediator *GlobalMediator::setFrenchProcessor(FrenchProcessor *frenchProcessor) {
+    m_frenchProcessor = frenchProcessor;
     return m_mediator;
 }

@@ -23,13 +23,11 @@
 
 #include "ankisettings.h"
 #include "audiosourcesettings.h"
-#include "dictionarysettings.h"
 #include "searchsettings.h"
 #include "interfacesettings.h"
 
 #define NAME_ANKI           "Anki Integration"
 #define NAME_AUDIO_SOURCE   "Audio Sources"
-#define NAME_DICTIONARIES   "Dictionaries"
 #define NAME_SEARCH         "Search"
 #define NAME_INTERFACE      "Interface"
 
@@ -48,7 +46,6 @@ OptionsWindow::OptionsWindow(QWidget *parent)
 
     addOption(NAME_ANKI,         new AnkiSettings);
     addOption(NAME_AUDIO_SOURCE, new AudioSourceSettings);
-    addOption(NAME_DICTIONARIES, new DictionarySettings);
     addOption(NAME_SEARCH,       new SearchSettings);
     addOption(NAME_INTERFACE,    new InterfaceSettings);
 

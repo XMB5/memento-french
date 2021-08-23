@@ -171,7 +171,7 @@ void AudioSourceSettings::showHelp()
         "<b>Source Name</b>: The name of the audio source as it will appear in Memento."
         "<br><br>"
         "<b>URL</b>: The URL of the audio source. "
-            "Supports inserting {expression} and {reading} markers into the URL. "
+            "Supports inserting {expression} marker into the URL. "
             "See Anki Integration Help for more information."
         "<br><br>"
         "<b>MD5 Skip Hash</b>: Audio that matches this MD5 hash will be ignored."

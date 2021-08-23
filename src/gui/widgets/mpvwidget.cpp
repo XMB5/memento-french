@@ -72,7 +72,7 @@ MpvWidget::MpvWidget(QWidget *parent)
     }
 
     mpv_set_option_string(mpv, "terminal",               "yes");
-    mpv_set_option_string(mpv, "msg-level",              "all=v");
+    mpv_set_option_string(mpv, "msg-level",              "all=info");
     mpv_set_option_string(mpv, "keep-open",              "yes");
     mpv_set_option_string(mpv, "config",                 "yes");
     mpv_set_option_string(mpv, "input-default-bindings", "yes");

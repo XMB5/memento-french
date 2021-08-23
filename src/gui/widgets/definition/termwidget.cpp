@@ -21,20 +21,12 @@
 #include "termwidget.h"
 #include "ui_termwidget.h"
 
-#include "tagwidget.h"
-#include "pitchwidget.h"
-#include "glossarywidget.h"
 #include "../../../util/iconfactory.h"
 #include "../../../util/globalmediator.h"
 #include "../../../dict/dictionary.h"
 #include "../../../audio/audioplayer.h"
 
 #include <QMenu>
-
-#define KANJI_UNICODE_LOWER_COMMON  "\u4e00"
-#define KANJI_UNICODE_UPPER_COMMON  "\u9faf"
-#define KANJI_UNICODE_LOWER_RARE    "\u3400"
-#define KANJI_UNICODE_UPPER_RARE    "\u4dbf"
 
 #define KANJI_STYLE_STRING      (QString("<style>a { color: %1; border: 0; text-decoration: none; }</style>"))
 #define KANJI_FORMAT_STRING     (QString("<a href=\"%1\">%1</a>"))
@@ -47,32 +39,17 @@
     #define READING_STYLE       (QString("QLabel { font-size: 12pt; }"))
 #endif
 
-TermWidget::TermWidget(const Term               *term,
-                       AnkiClient               *client,
+TermWidget::TermWidget(const SubtitleExtract    *term,
                        const QList<AudioSource> *sources,
                        QWidget                  *parent) 
     : QWidget(parent), 
       m_ui(new Ui::TermWidget), 
-      m_term(term), 
-      m_client(client),
+      m_term(term),
       m_sources(sources)
 {
     m_ui->setupUi(this);
 
-    m_ui->labelKanji->setStyleSheet(EXPRESSION_STYLE);
-    m_ui->labelKana->setStyleSheet(READING_STYLE);
-
-    m_layoutTermTags = new FlowLayout(-1, 6);
-    m_layoutFreqTags = new FlowLayout(-1, 6);
-    m_layoutPitches  = new QVBoxLayout;
-    m_layoutGlossary = new QVBoxLayout;
-
-    m_ui->verticalLayout->addLayout(m_layoutTermTags);
-    m_ui->verticalLayout->addLayout(m_layoutFreqTags);
-    m_ui->verticalLayout->addLayout(m_layoutPitches);
-    m_ui->verticalLayout->addLayout(m_layoutGlossary);
-    
-    m_ui->verticalLayout->addStretch();
+    //m_ui->textEdit->document()->setDefaultStyleSheet(GlobalMediator::getGlobalMediator()->getDictionary()->termCss);
 
     IconFactory *factory = IconFactory::create();
 
@@ -87,7 +64,6 @@ TermWidget::TermWidget(const Term               *term,
 
     setTerm(*term);
 
-    connect(m_ui->labelKanji,     &QLabel::linkActivated, this, &TermWidget::searchKanji);
     connect(m_ui->buttonAddCard,  &QToolButton::clicked,  this, &TermWidget::addNote);
     connect(m_ui->buttonAnkiOpen, &QToolButton::clicked,  this, &TermWidget::openAnki);
     connect(m_ui->buttonAudio,    &QToolButton::clicked,  this, 
@@ -107,134 +83,79 @@ TermWidget::~TermWidget()
     delete m_ui;
 }
 
-void TermWidget::setTerm(const Term &term)
-{
-    if (term.reading.isEmpty())
-    {
-        m_ui->labelKana->hide();
-    }
-    else
-    {
-        m_ui->labelKana->show();
-    }
-    m_ui->labelKana->setText(term.reading);
-    QString kanjiLabelText = KANJI_STYLE_STRING.arg(m_ui->labelKanji->palette().color(m_ui->labelKanji->foregroundRole()).name());
-    for (const QString &ch : term.expression)
-    {
-        kanjiLabelText += isKanji(ch) ? KANJI_FORMAT_STRING.arg(ch) : ch;
-    }
-    m_ui->labelKanji->setText(kanjiLabelText);
-    m_ui->labelJisho->setText(generateJishoLink(term.expression));
-
-    for (const Frequency &freq : term.frequencies)
-    {
-        TagWidget *tag = new TagWidget(freq);
-        m_layoutFreqTags->addWidget(tag);
-    }
-
-    for (const Pitch &pitch : term.pitches)
-    {
-        m_layoutPitches->addWidget(new PitchWidget(pitch));
-    }
-
-    for (const Tag &termTag : term.tags)
-    {
-        TagWidget *tag = new TagWidget(termTag);
-        m_layoutTermTags->addWidget(tag);
-    }
-
-    for (size_t i = 0; i < term.definitions.size(); ++i)
-    {
-        m_layoutGlossary->addWidget(new GlossaryWidget(i + 1, term.definitions[i]));
-    }
-}
-
-inline QString TermWidget::generateJishoLink(const QString &word)
-{
-    return QString("<a href=\"https://jisho.org/search/%1\">Jisho</a>").arg(word);
-}
-
-inline bool TermWidget::isKanji(const QString &ch)
-{
-    return ch >= KANJI_UNICODE_LOWER_COMMON && ch <= KANJI_UNICODE_UPPER_COMMON ||
-           ch >= KANJI_UNICODE_LOWER_RARE   && ch <= KANJI_UNICODE_UPPER_RARE;
-}
-
 void TermWidget::setAddable(bool value)
 {
     m_ui->buttonAddCard->setVisible(value);
     m_ui->buttonAnkiOpen->setVisible(!value);
-    for (size_t i = 0; i < m_layoutGlossary->count(); ++i)
-        ((GlossaryWidget *)m_layoutGlossary->itemAt(i)->widget())->setCheckable(value);
 }
 
 void TermWidget::addNote()
 {
-    m_ui->buttonAddCard->setEnabled(false);
-
-    Term *term = new Term(*m_term);
-    term->definitions.clear();
-    for (size_t i = 0; i < m_layoutGlossary->count(); ++i)
-    {
-        GlossaryWidget *widget = (GlossaryWidget *)m_layoutGlossary->itemAt(i)->widget();
-        if (widget->isChecked())
-        {
-            term->definitions.append(TermDefinition(m_term->definitions[i]));
-        }
-        widget->setCheckable(false);
-    }
-
-    AnkiReply *reply = m_client->addNote(term);
-    connect(reply, &AnkiReply::finishedInt, this,
-        [=] (const int id, const QString &error) {
-            if (!error.isEmpty())
-            {
-                Q_EMIT GlobalMediator::getGlobalMediator()->showCritical("Error Adding Note", error);
-            }
-            else
-            {
-                m_ui->buttonAnkiOpen->setVisible(true);
-                m_ui->buttonAddCard->setVisible(false);
-            }
-        }
-    );
+    //TODO add note
+//    m_ui->buttonAddCard->setEnabled(false);
+//
+//    Term *term = new Term(*m_term);
+//    term->definitions.clear();
+//    for (size_t i = 0; i < m_layoutGlossary->count(); ++i)
+//    {
+//        GlossaryWidget *widget = (GlossaryWidget *)m_layoutGlossary->itemAt(i)->widget();
+//        if (widget->isChecked())
+//        {
+//            term->definitions.append(TermDefinition(m_term->definitions[i]));
+//        }
+//        widget->setCheckable(false);
+//    }
+//
+//    AnkiReply *reply = m_client->addNote(term);
+//    connect(reply, &AnkiReply::finishedInt, this,
+//        [=] (const int id, const QString &error) {
+//            if (!error.isEmpty())
+//            {
+//                Q_EMIT GlobalMediator::getGlobalMediator()->showCritical("Error Adding Note", error);
+//            }
+//            else
+//            {
+//                m_ui->buttonAnkiOpen->setVisible(true);
+//                m_ui->buttonAddCard->setVisible(false);
+//            }
+//        }
+//    );
 }
 
 void TermWidget::openAnki()
 {
-    QString deck = m_client->getConfig()->termDeck;
-    AnkiReply *reply = m_client->openBrowse(deck, m_term->expression);
-    connect(reply, &AnkiReply::finishedIntList, this,
-        [=] (const QList<int> &value, const QString &error) {
-            if (!error.isEmpty())
-            {
-                Q_EMIT GlobalMediator::getGlobalMediator()->showCritical(
-                    "Error Opening Anki", error
-                );
-            }
-        }
-    );
+    //TODO open anki
+//    QString deck = GlobalMediator::getGlobalMediator()->getAnkiClient()->getConfig()->termDeck;
+//    AnkiReply *reply = GlobalMediator::getGlobalMediator()->getAnkiClient()->openBrowse(deck, m_term->expression);
+//    connect(reply, &AnkiReply::finishedIntList, this,
+//        [=] (const QList<int> &value, const QString &error) {
+//            if (!error.isEmpty())
+//            {
+//                Q_EMIT GlobalMediator::getGlobalMediator()->showCritical(
+//                    "Error Opening Anki", error
+//                );
+//            }
+//        }
+//    );
 }
 
 void TermWidget::playAudio(QString url, const QString &hash)
 {
     m_ui->buttonAudio->setEnabled(false);
-    AudioPlayerReply *reply = GlobalMediator::getGlobalMediator()->getAudioPlayer()->playAudio(
-        url.replace(REPLACE_EXPRESSION, m_term->expression).replace(REPLACE_READING, m_term->reading),
-        hash
-    );
+    QString substring = m_term->subtitleText.mid(m_term->phrase.start, m_term->phrase.stop - m_term->phrase.start);
+    AudioPlayerReply *reply = GlobalMediator::getGlobalMediator()->getAudioPlayer()->playAudio(substring, "fr", "fr");
     m_ui->buttonAudio->setEnabled(reply == nullptr);
 
     if (reply)
     {
-        connect(reply, &AudioPlayerReply::result, this, 
+        connect(reply, &AudioPlayerReply::result, this,
             [=] (const bool success) {
                 if (!success)
                 {
                     IconFactory *factory = IconFactory::create();
                     m_ui->buttonAudio->setIcon(factory->getIcon(IconFactory::noaudio));
                 }
-                m_ui->buttonAudio->setEnabled(true); 
+                m_ui->buttonAudio->setEnabled(true);
             }
         );
     }
@@ -252,13 +173,48 @@ void TermWidget::showAudioSources(const QPoint &pos)
 
 void TermWidget::searchKanji(const QString &ch)
 {
-    Kanji *kanji = GlobalMediator::getGlobalMediator()->getDictionary()->searchKanji(ch);
-    if (kanji)
-    {
-        kanji->sentence    = m_term->sentence;
-        kanji->clozePrefix = m_term->clozePrefix;
-        kanji->clozeBody   = m_term->clozeBody;
-        kanji->clozeSuffix = m_term->clozeSuffix;
-        Q_EMIT kanjiSearched(kanji);
+    //TODO search
+//    Kanji *kanji = GlobalMediator::getGlobalMediator()->getDictionary()->searchKanji(ch);
+//    if (kanji)
+//    {
+//        kanji->sentence    = m_term->sentence;
+//        kanji->clozePrefix = m_term->clozePrefix;
+//        kanji->clozeBody   = m_term->clozeBody;
+//        kanji->clozeSuffix = m_term->clozeSuffix;
+//        Q_EMIT kanjiSearched(kanji);
+//    }
+}
+
+void TermWidget::setTerm(const SubtitleExtract &extract) {
+    QStringRef phraseStr = extract.subtitleText.midRef(extract.phrase.start, extract.phrase.stop - extract.phrase.start);
+    this->m_ui->extractLabel->setText(phraseStr.toString());
+
+    QString html = "<html><head><style>" + GlobalMediator::getGlobalMediator()->getDictionary()->termCss + "</style><body>";
+
+    // the extract might not have any definitions because the word isn't a lemma
+    // we need to check all forms of the word -> find lemmas -> add their definitions
+
+    std::multimap<QString, SyntaxInfo> lemmas;
+
+    for (SyntaxInfo &info: extract.phrase.dictEntry->syntaxInfos) {
+        lemmas.emplace(info.lemma, info);
     }
+
+    auto it = lemmas.begin();
+    auto end = lemmas.end();
+    while (it != end) {
+        QString lemma = it->first;
+        DictEntry *lemmaEntry = lemma.isEmpty() ? extract.phrase.dictEntry : GlobalMediator::getGlobalMediator()->getDictionary()->map[lemma];
+
+        if (lemmaEntry != nullptr) {
+            for (auto &def : lemmaEntry->definitions) {
+                html += def;
+            }
+        }
+
+        it = lemmas.upper_bound(lemma);
+    }
+
+    html += "</body></html>";
+    this->m_ui->webEngineView->setHtml(html);
 }

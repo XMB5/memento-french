@@ -32,6 +32,9 @@
 #include "util/iconfactory.h"
 #include "audio/audioplayer.h"
 
+#include "dict/dictionary.h"
+#include "dict/frenchprocessor.h"
+
 #if __APPLE__
     #include <locale.h>
 #endif
@@ -85,9 +88,9 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
     /* Originization Info */
-    QCoreApplication::setOrganizationName("memento");
-    QCoreApplication::setOrganizationDomain("ripose.projects");
-    QCoreApplication::setApplicationName("memento");
+    QCoreApplication::setOrganizationName("memento-french");
+    QCoreApplication::setOrganizationDomain("xmb5.projects");
+    QCoreApplication::setApplicationName("memento-french");
 
     /* Construct the application */
     QApplication memento(argc, argv);
@@ -100,8 +103,7 @@ int main(int argc, char *argv[])
     {
         if (!QDir().mkdir(DirectoryUtils::getConfigDir()))
         {
-            QMessageBox message;
-            message.critical(
+            QMessageBox::critical(
                 0, "Error Creating Config Directory",
                 "Could not make configuration directory at " + DirectoryUtils::getConfigDir()
             );
@@ -109,24 +111,19 @@ int main(int argc, char *argv[])
         }
     }
 
-    /* Create the dictionary directory if it doesn't exist */
-    if (!QDir(DirectoryUtils::getDictionaryDir()).exists())
-    {
-        if (!QDir().mkdir(DirectoryUtils::getDictionaryDir()))
-        {
-            QMessageBox message;
-            message.critical(
-                0, "Error Creating Dict Directory",
-                "Could not make dictionary directory at " + DirectoryUtils::getDictionaryDir()
-            );
-            return EXIT_FAILURE;
-        }
-    }
     
     setlocale(LC_NUMERIC, "C");
     
     GlobalMediator::createGlobalMedaitor();
     GlobalMediator::getGlobalMediator()->setAudioPlayer(new AudioPlayer);
+    try {
+        GlobalMediator::getGlobalMediator()->setDictionary(new Dictionary);
+    } catch (std::exception &e) {
+        QMessageBox::critical(0, "Error reading dictionary",
+                              QString("Error reading dictionary:\n") + e.what());
+        return EXIT_FAILURE;
+    }
+    GlobalMediator::getGlobalMediator()->setFrenchProcessor(new FrenchProcessor);
 
     MainWindow *main_window = new MainWindow;
     main_window->show();
@@ -134,6 +131,8 @@ int main(int argc, char *argv[])
 
     /* Deallocate shared resources */
     delete main_window;
+    delete GlobalMediator::getGlobalMediator()->getFrenchProcessor();
+    delete GlobalMediator::getGlobalMediator()->getDictionary();
     delete GlobalMediator::getGlobalMediator()->getAudioPlayer();
     delete GlobalMediator::getGlobalMediator();
     delete IconFactory::create();

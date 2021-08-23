@@ -1,16 +1,11 @@
 add_library(
     dictionary_db
     dictionary.cpp
-    databasemanager.cpp
-    yomidbbuilder.c
     expression.h
-)
+        dictreader.cpp dictreader.h frenchprocessor.cpp frenchprocessor.h)
 target_link_libraries(
     dictionary_db
-    ${SQLITE}
-    ${JSONC}
-    ${LIBZIP}
-    ${MECAB}
+    ZLIB::ZLIB
     Qt5::Core
     Qt5::Widgets
 )

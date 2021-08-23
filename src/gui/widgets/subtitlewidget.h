@@ -21,14 +21,16 @@
 #ifndef SUBTITLEWIDGET_H
 #define SUBTITLEWIDGET_H
 
-#include "../../dict/dictionary.h"
+#include "../../dict/expression.h"
 
-#include <QTextEdit>
-
+#include <QWidget>
 #include <QMouseEvent>
 #include <QTimer>
+#include <QTextLayout>
 
-class SubtitleWidget : public QTextEdit
+#include <vector>
+
+class SubtitleWidget : public QWidget
 {
     Q_OBJECT
 
@@ -40,54 +42,33 @@ protected:
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void leaveEvent(QEvent *event) override;
-    void resizeEvent(QResizeEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
     void showEvent(QShowEvent *event) override;
     void hideEvent(QHideEvent *event) override;
 
 private Q_SLOTS:
-    void setTheme();
     void adjustVisibility();
-    void findTerms();
     void positionChanged(const double value);
     void setSubtitle(QString subtitle,
                      const double start,
                      const double end,
                      const double delay);
-    void setSelectedText();
-    void deselectText();
-    void loadSettings();
+    void onPlayerResize();
 
 private:
-    Dictionary *m_dictionary;
     int         m_currentIndex;
-    int         m_lastEmittedIndex;
-    int         m_lastEmittedSize;
-    QTimer     *m_findDelay;
     bool        m_paused;
 
+    SubtitleInfo subtitleInfo;
     QString     m_rawText;
     double      m_startTime;
     double      m_endTime;
 
-    enum SearchMethod
-    {
-        Hover,
-        Modifier
-    };
+    std::vector<std::unique_ptr<QTextLayout>> textLayouts;
+    std::vector<QRectF> charBoundaries;
 
-    /* Settings */
-    SearchMethod    m_method;
-    int             m_delay;
-    Qt::Modifier    m_modifier;
-    bool            m_hideSubsWhenVisible;
-    bool            m_hideOnPlay;
-    bool            m_replaceNewLines;
-    QString         m_replaceStr;
-    QColor          m_strokeColor;
-    double          m_strokeSize;
-
-    void deleteTerms(QList<Term *> *terms);
+    void changeFont();
+    void loadTextLayout();
     void fitToContents();
 };
 

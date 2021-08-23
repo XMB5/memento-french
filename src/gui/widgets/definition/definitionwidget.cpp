@@ -30,7 +30,7 @@
 #include <QSettings>
 #include <QPushButton>
 
-DefinitionWidget::DefinitionWidget(const QList<Term *> *terms, QWidget *parent)
+DefinitionWidget::DefinitionWidget(const QList<SubtitleExtract *> *terms, QWidget *parent)
     : QWidget(parent),
       m_ui(new Ui::DefinitionWidget),
       m_client(GlobalMediator::getGlobalMediator()->getAnkiClient()),
@@ -140,7 +140,7 @@ DefinitionWidget::DefinitionWidget(const QList<Term *> *terms, QWidget *parent)
 DefinitionWidget::~DefinitionWidget()
 {
     disconnect();
-    for (const Term *term : *m_terms)
+    for (const SubtitleExtract *term : *m_terms)
     {
         delete term;
     }
@@ -180,7 +180,7 @@ void DefinitionWidget::showTerms(const size_t start, const size_t end)
     setUpdatesEnabled(false);
     for (size_t i = start; i < m_terms->size() && i < end; ++i)
     {
-        TermWidget *termWidget = new TermWidget(m_terms->at(i), m_client, &m_sources, this);
+        TermWidget *termWidget = new TermWidget(m_terms->at(i), &m_sources, this);
         connect(termWidget, &TermWidget::kanjiSearched, this, &DefinitionWidget::showKanji);
         m_termWidgets.append(termWidget);
         m_ui->scrollAreaContents->layout()->addWidget(termWidget);
@@ -194,17 +194,18 @@ void DefinitionWidget::showTerms(const size_t start, const size_t end)
     setUpdatesEnabled(true);
 }
 
-void DefinitionWidget::showKanji(const Kanji *kanji)
+void DefinitionWidget::showKanji(const SubtitleExtract *kanji)
 {
-    m_savedScroll = m_ui->scrollArea->verticalScrollBar()->value();
-    for (size_t i = 0; i < m_ui->scrollAreaContents->layout()->count(); ++i)
-    {
-        m_ui->scrollAreaContents->layout()->itemAt(i)->widget()->hide();
-    }
-    KanjiWidget *kanjiWidget = new KanjiWidget(kanji);
-    connect(kanjiWidget, &KanjiWidget::backPressed, this, &DefinitionWidget::hideKanji);
-    m_ui->scrollAreaContents->layout()->addWidget(kanjiWidget);
-    m_ui->scrollArea->verticalScrollBar()->setValue(0);
+    //TODO show sub-extract?, may also have to modify termwidget
+//    m_savedScroll = m_ui->scrollArea->verticalScrollBar()->value();
+//    for (size_t i = 0; i < m_ui->scrollAreaContents->layout()->count(); ++i)
+//    {
+//        m_ui->scrollAreaContents->layout()->itemAt(i)->widget()->hide();
+//    }
+//    KanjiWidget *kanjiWidget = new KanjiWidget(kanji);
+//    connect(kanjiWidget, &KanjiWidget::backPressed, this, &DefinitionWidget::hideKanji);
+//    m_ui->scrollAreaContents->layout()->addWidget(kanjiWidget);
+//    m_ui->scrollArea->verticalScrollBar()->setValue(0);
 }
 
 void DefinitionWidget::hideKanji()

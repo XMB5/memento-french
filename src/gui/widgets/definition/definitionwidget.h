@@ -26,7 +26,6 @@
 #include "../../../dict/expression.h"
 #include "../../../anki/ankiclient.h"
 #include "termwidget.h"
-#include "kanjiwidget.h"
 
 #include <QWheelEvent>
 
@@ -40,14 +39,14 @@ class DefinitionWidget : public QWidget
     Q_OBJECT
 
 public:
-    DefinitionWidget(const QList<Term *> *terms, QWidget *parent = 0);
+    DefinitionWidget(const QList<SubtitleExtract *> *terms, QWidget *parent = 0);
     ~DefinitionWidget();
 
 private Q_SLOTS:
     void setTheme();
     void setAddable(const size_t start, const size_t end);
     void showTerms(const size_t start, const size_t end);
-    void showKanji(const Kanji *kanji);
+    void showKanji(const SubtitleExtract *kanji);
     void hideKanji();
 
 protected:
@@ -69,7 +68,7 @@ private:
     Ui::DefinitionWidget *m_ui;
     AnkiClient           *m_client;
     QList<AudioSource>    m_sources;
-    const QList<Term *>  *m_terms;
+    const QList<SubtitleExtract *>  *m_terms;
     QList<bool>           m_addable;
     QList<TermWidget *>   m_termWidgets;
     int                   m_savedScroll;

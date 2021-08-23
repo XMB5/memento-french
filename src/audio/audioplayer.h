@@ -26,6 +26,7 @@
 #include <QTemporaryFile>
 #include <QMutex>
 #include <QHash>
+#include <QProcess>
 
 struct mpv_handle;
 class QNetworkAccessManager;
@@ -49,7 +50,7 @@ public:
 
     void clearFiles();
 
-    AudioPlayerReply *playAudio(QString url, QString hash = QString());
+    AudioPlayerReply *playAudio(QString text, QString language, QString tld);
 
 private:
     mpv_handle                       *m_mpv;
@@ -57,6 +58,7 @@ private:
     QHash<QString, QTemporaryFile *>  m_files;
     QMutex                            m_fileLock;
 
+    QTemporaryFile* downloadAudio(QString text, QString lang, QString tld);
     bool playFile(const QTemporaryFile *file);
 };
 

@@ -28,18 +28,6 @@ target_link_libraries(
 )
 
 add_library(
-    dictionarysettings
-    dictionarysettings.cpp
-    dictionarysettings.ui
-)
-target_link_libraries(
-    dictionarysettings
-    globalmediator
-    Qt5::Widgets
-    dictionary_db
-)
-
-add_library(
     searchsettings
     searchsettings.cpp
     searchsettings.ui
@@ -68,7 +56,6 @@ add_library(
 )
 target_link_libraries(
     optionswindow
-    dictionarysettings
     ankisettings
     searchsettings
     interfacesettings

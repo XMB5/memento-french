@@ -130,7 +130,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_mediator, &GlobalMediator::playerFullscreenChanged, this, &MainWindow::setFullscreen);
     connect(m_mediator, &GlobalMediator::playerClosed,            this, &MainWindow::close);
     connect(m_mediator, &GlobalMediator::playerTitleChanged,      this, 
-        [=] (const QString name) { setWindowTitle(name + " - Memento"); }
+        [=] (const QString name) { setWindowTitle(name + " - Memento-french"); }
     );
     connect(m_mediator, &GlobalMediator::playerMouseMoved, this,
         [=] {
@@ -280,21 +280,6 @@ void MainWindow::showEvent(QShowEvent *event)
             m_player->open(args[i], true);
         }
         m_player->play();
-    }
-
-    /* Check for installed dictionaries */
-    if (m_mediator->getDictionary()->getDictionaries().isEmpty())
-    {
-        Q_EMIT m_mediator->showInformation(
-            "No Dictionaries Installed",
-            "No dictionaries are installed. For subtitle searching to work, please install a dictionary.<br>"
-            "Dictionaries can be found <a href='https://foosoft.net/projects/yomichan/'>here</a>.<br>"
-        #if __APPLE__
-            "To install a dictionary, go to Memento -> Preferences -> Dictionaries."
-        #else
-            "To install a dictionary, go to Settings -> Options -> Dictionaries."
-        #endif
-        );
     }
 
     QMainWindow::showEvent(event);
@@ -458,7 +443,7 @@ void MainWindow::setFullscreen(bool value)
     }
 }
 
-void MainWindow::setTerms(const QList<Term *> *terms)
+void MainWindow::setTerms(const QList<SubtitleExtract *> *terms)
 {
     deleteDefinitionWidget();
     
@@ -579,14 +564,8 @@ void MainWindow::setDefinitionWidgetLocation()
         y = m_subtitle.subtitleWidget->pos().y() + m_subtitle.subtitleWidget->height();
     }
 
-    if (y + m_definition->height() > m_ui->player->height())
-    {
-        deleteDefinitionWidget();
-    }
-    else
-    {
-        m_definition->move(x, y);
-    }
+
+    m_definition->move(x, y);
 }
 
 void MainWindow::deleteDefinitionWidget()

@@ -23,43 +23,16 @@
    <item>
     <layout class="QHBoxLayout" name="layoutTop">
      <item>
-      <layout class="QVBoxLayout" name="layoutKanjiKana">
-       <property name="spacing">
-        <number>0</number>
+      <widget class="QLabel" name="extractLabel">
+       <property name="font">
+        <font>
+         <pointsize>11</pointsize>
+        </font>
        </property>
-       <item>
-        <widget class="QLabel" name="labelKana">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignBottom|Qt::AlignHCenter</set>
-         </property>
-         <property name="textInteractionFlags">
-          <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="labelKanji">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignHCenter|Qt::AlignTop</set>
-         </property>
-         <property name="textInteractionFlags">
-          <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
-         </property>
-        </widget>
-       </item>
-      </layout>
+       <property name="text">
+        <string>Extract Label</string>
+       </property>
+      </widget>
      </item>
      <item>
       <spacer name="spaceTop">
@@ -75,7 +48,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QLabel" name="labelJisho">
+      <widget class="QLabel" name="linkLabel">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -88,7 +61,7 @@
         </font>
        </property>
        <property name="text">
-        <string>&lt;a href=&quot;https://jisho.org/&quot;&gt;Jisho&lt;/a&gt;</string>
+        <string>&lt;a href=&quot;#&quot;&gt;Link&lt;/a&gt;</string>
        </property>
        <property name="openExternalLinks">
         <bool>true</bool>
@@ -148,8 +121,24 @@
      </item>
     </layout>
    </item>
+   <item>
+    <widget class="QWebEngineView" name="webEngineView">
+     <property name="url">
+      <url>
+       <string>about:blank</string>
+      </url>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QWebEngineView</class>
+   <extends>QWidget</extends>
+   <header location="global">QtWebEngineWidgets/QWebEngineView</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

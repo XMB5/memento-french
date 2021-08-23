@@ -585,10 +585,10 @@ AnkiReply *AnkiClient::requestStringList(const QString &action, const QJsonObjec
     return ankiReply;
 }
 
-AnkiReply *AnkiClient::notesAddable(const QList<Term *> &terms)
+AnkiReply *AnkiClient::notesAddable(const QList<SubtitleExtract *> &terms)
 {
     QJsonArray notes;
-    for (const Term *term : terms)
+    for (const SubtitleExtract *term : terms)
         notes.append(createAnkiNoteObject(*term));
     QJsonObject params;
     params[ANKI_CAN_ADD_NOTES_PARAM] = notes;
@@ -628,50 +628,7 @@ AnkiReply *AnkiClient::notesAddable(const QList<Term *> &terms)
     return ankiReply;
 }
 
-AnkiReply *AnkiClient::notesAddable(const QList<const Kanji *> &kanjiList)
-{
-    QJsonArray notes;
-    for (const Kanji *kanji : kanjiList)
-        notes.append(createAnkiNoteObject(*kanji));
-    QJsonObject params;
-    params[ANKI_CAN_ADD_NOTES_PARAM] = notes;
-    QNetworkReply *reply = makeRequest(ANKI_CAN_ADD_NOTES, params);
-    AnkiReply *ankiReply = new AnkiReply;
-    connect(reply, &QNetworkReply::finished, this, [=] {
-        QString error;
-        QJsonObject replyObj = processReply(reply, error);
-        if (replyObj.isEmpty())
-        {
-            Q_EMIT ankiReply->finishedBoolList(QList<bool>(), error);
-        }
-        else if (!replyObj[ANKI_RESULT].isArray())
-        {
-            Q_EMIT ankiReply->finishedBoolList(QList<bool>(), "Result is not an array");
-        }
-        else
-        {
-            QList<bool> response;
-            QJsonArray resultArray = replyObj[ANKI_RESULT].toArray();
-            for (const QJsonValueRef &addable : resultArray)
-            {
-                if (addable.isBool())
-                {
-                    response.append(addable.toBool());
-                }
-                else
-                {
-                    Q_EMIT ankiReply->finishedBoolList(QList<bool>(), "Response was not an array of bool");
-                }
-            }
-            Q_EMIT ankiReply->finishedBoolList(response, error);
-        }
-        ankiReply->deleteLater();
-        reply->deleteLater();
-    });
-    return ankiReply;
-}
-
-AnkiReply *AnkiClient::addNote(const Term *term)
+AnkiReply *AnkiClient::addNote(const SubtitleExtract *term)
 {
     AnkiReply *ankiReply = new AnkiReply;
     
@@ -688,411 +645,126 @@ AnkiReply *AnkiClient::addNote(const Term *term)
     return ankiReply;
 }
 
-AnkiReply *AnkiClient::addNote(const Kanji *kanji)
-{
-    AnkiReply *ankiReply = new AnkiReply;
-    
-    QThreadPool::globalInstance()->start(
-        [=] {
-            QJsonObject params;
-            params[ANKI_ADD_NOTE_PARAM] = createAnkiNoteObject(*kanji, true);
-            delete kanji;
-            
-            Q_EMIT sendIntRequest(ANKI_ADD_NOTE, params, ankiReply);
-        }
-    );
-
-    return ankiReply;
-}
-
-QJsonObject AnkiClient::createAnkiNoteObject(const Term &term, const bool media)
+QJsonObject AnkiClient::createAnkiNoteObject(const SubtitleExtract &term, const bool media)
 {
     /* Build common parts of a note */
     QJsonObject note;
     QJsonObject fieldsObj;
-    buildCommonNote(note, fieldsObj, m_currentConfig->termFields, media);
-
-    /* Set Term and Model */
-    note[ANKI_NOTE_DECK] = m_currentConfig->termDeck;
-    note[ANKI_NOTE_MODEL] = m_currentConfig->termModel;
-
-    /* Process Fields */
-    QString audioFile = AUDIO_FILENAME_FORMAT_STRING.arg(term.reading).arg(term.expression);
-
-    QString clozeBody   = QString(term.clozeBody).replace('\n', "<br>");
-    QString clozePrefix = QString(term.clozePrefix).replace('\n', "<br>");
-    QString clozeSuffix = QString(term.clozeSuffix).replace('\n', "<br>");
-    QString sentence    = QString(term.sentence).replace('\n', "<br>");
-
-    QString frequencies = buildFrequencies(term.frequencies);
-
-    QString furigana;
-    QString furiganaPlain;
-    QString reading;
-    if (term.reading.isEmpty())
-    {
-        furigana      = term.expression;
-        furiganaPlain = term.expression;
-        reading       = term.expression;
-    } 
-    else
-    {
-        furigana      = FURIGANA_FORMAT_STRING.arg(term.expression).arg(term.reading);
-        furiganaPlain = term.expression + "[" + term.reading + "]";
-        reading       = term.reading;
-    }
-        
-    QString glossary        = buildGlossary(term.definitions);
-    QString glossaryCompact = "<ol>";
-
-    QString pitch;
-    QString pitchGraph;
-    QString pitchPosition;
-    buildPitchInfo(term.pitches, pitch, pitchGraph, pitchPosition);
-
-    for (const TermDefinition &def : term.definitions)
-    {
-        for (QString glos : def.glossary)
-        {
-            glossaryCompact += "<li>";
-            glossaryCompact += glos.replace('\n', "</li><li>");
-            glossaryCompact += "</li>";
-        }
-        if (glossaryCompact.endsWith("<li></li>"))
-            glossaryCompact.chop(9);
-    }
-    glossaryCompact        += "</ol>";
-
-    QString tags = "<ul>";
-    accumulateTags(term.tags, tags);
-    tags        += "</ul>";
-    if (tags == "<ul></ul>")
-        tags.clear();
-
-    /* Find and replace markers with data */
-    QStringList fields = m_currentConfig->termFields.keys();
-    QJsonArray fieldsWithAudio;
-    for (const QString &field : fields)
-    {
-        QString value = fieldsObj[field].toString();
-
-        if (value.contains(REPLACE_AUDIO))
-        {
-            fieldsWithAudio.append(field);
-        }
-        value.replace(REPLACE_AUDIO, "");
-
-        value.replace(REPLACE_CLOZE_BODY,      clozeBody);
-        value.replace(REPLACE_CLOZE_PREFIX,    clozePrefix);
-        value.replace(REPLACE_CLOZE_SUFFIX,    clozeSuffix);
-        value.replace(REPLACE_EXPRESSION,      term.expression);
-        value.replace(REPLACE_FREQUENCIES,     frequencies);
-        value.replace(REPLACE_FURIGANA,        furigana);
-        value.replace(REPLACE_FURIGANA_PLAIN,  furiganaPlain);
-        value.replace(REPLACE_GLOSSARY,        glossary);
-        value.replace(REPLACE_GLOSSARY_BRIEF,  glossaryCompact);
-        value.replace(REPLACE_PITCH,           pitch);
-        value.replace(REPLACE_PITCH_GRAPHS,    pitchGraph);
-        value.replace(REPLACE_PITCH_POSITIONS, pitchPosition);
-        value.replace(REPLACE_READING,         reading);
-        value.replace(REPLACE_SENTENCE,        sentence);
-        value.replace(REPLACE_TAGS,            tags);
-
-        fieldsObj[field] = value;
-    }
-    note[ANKI_NOTE_FIELDS] = fieldsObj;
-
-    /* Add {audio} marker to the note */
-    if (media)
-    {
-        QJsonArray audio = note[ANKI_NOTE_AUDIO].toArray();
-        if (!fieldsWithAudio.isEmpty())
-        {
-            QJsonObject audObj;
-
-            audObj[ANKI_NOTE_URL]      = QString(m_currentConfig->audio.url)
-                .replace(REPLACE_EXPRESSION, term.expression)
-                .replace(REPLACE_READING,    reading);
-            audObj[ANKI_NOTE_FILENAME] = audioFile;
-            audObj[ANKI_NOTE_FIELDS]   = fieldsWithAudio;
-            audObj[ANKI_NOTE_SKIPHASH] = m_currentConfig->audio.md5;
-            audio.append(audObj);
-        }
-
-        if (!audio.isEmpty())
-        {
-            note[ANKI_NOTE_AUDIO] = audio;
-        }  
-    }
-
-    return note;
-}
-
-#define HL_STYLE        (QString("border-top: solid; border-right: solid;"))
-#define H_STYLE         (QString("border-top: solid;"))
-
-#define PITCH_FORMAT    (QString("<span style=\"%1\">%2</span>"))
-
-void AnkiClient::buildPitchInfo(const QList<Pitch> &pitches, 
-                                QString            &pitch,
-                                QString            &pitchGraph,
-                                QString            &pitchPosition)
-{
-    pitch         += "<span class=\"memento-pitch\">";
-    pitchGraph    += "<span>";
-    pitchPosition += "<span>";
-    
-    const bool multipleDicts = pitches.size() > 1;
-
-    if (multipleDicts)
-    {
-        pitch         += "<ul>";
-        pitchGraph    += "<ul>";
-        pitchPosition += "<ul>";
-    }
-    
-    for (const Pitch &p : pitches)
-    {
-        const bool multiplePitches = p.position.size() > 1;
-
-        /* Header */
-        if (multipleDicts)
-        {
-            pitch         += "<li><i>" + p.dictionary + "</i>";
-            pitchGraph    += "<li><i>" + p.dictionary + "</i>";
-            pitchPosition += "<li><i>" + p.dictionary + "</i>";
-        }
-        if(multiplePitches)
-        {
-            pitch         += "<ol>";
-            pitchGraph    += "<ol>";
-            pitchPosition += "<ol>";
-        }
-
-        /* Body */
-        for (const uint8_t pos : p.position)
-        {
-            if (p.mora.isEmpty())
-            {
-                continue;
-            }
-
-            if (multiplePitches)
-            {
-                pitch         += "<li style=\"padding: 2px 0px 2px 0px;\">";
-                pitchGraph    += "<li>";
-                pitchPosition += "<li>";
-            }
-
-            /* Build {pitch} marker */
-            switch (pos)
-            {
-            case 0:
-                pitch += p.mora.first();
-                if (p.mora.size() > 1)
-                {
-                    pitch += PITCH_FORMAT.arg(H_STYLE)
-                                         .arg(p.mora.join("").remove(0, p.mora.first().size()));
-                }
-                break;
-            case 1:
-                pitch += PITCH_FORMAT.arg(HL_STYLE).arg(p.mora.first());
-                if (p.mora.size() > 1)
-                {
-                    pitch += p.mora.join("").remove(0, p.mora.first().size());
-                }
-                break;
-            default:
-            {
-                QString text = p.mora.first();
-                pitch += text;
-
-                text.clear();
-                for (size_t i = 1; i < pos; ++i)
-                {
-                    text += p.mora[i];
-                }
-                if (!text.isEmpty())
-                {
-                    pitch += PITCH_FORMAT.arg(HL_STYLE).arg(text);
-                }
-
-                text.clear();
-                for (size_t i = pos; i < p.mora.size(); ++i)
-                {
-                    text += p.mora[i];
-                }
-                if (!text.isEmpty())
-                {
-                    pitch += text;
-                }
-            }
-            }
-
-            /* Build {pitch-graph}s */
-            pitchGraph = GraphicUtils::generatePitchGraph(p.mora.size(), pos, "white", "black");
-            
-            /* Build {pitch-posititon}s */
-            pitchPosition += "[" + QString::number(pos) + "]";
-
-            if (multiplePitches)
-            {
-                pitch         += "</li>";
-                pitchGraph    += "</li>";
-                pitchPosition += "</li>";
-            }
-        }
-
-        /* Trailer */
-        if(multiplePitches)
-        {
-            pitch         += "</ol>";
-            pitchGraph    += "</ol>";
-            pitchPosition += "</ol>";
-        }
-        if (multipleDicts)
-        {
-            pitch         += "</li>";
-            pitchGraph    += "</li>";
-            pitchPosition += "</li>";
-        }
-    }
-
-    if (multipleDicts)
-    {
-        pitch         += "</ul>";
-        pitchGraph    += "</ul>";
-        pitchPosition += "</ul>";
-    }
-
-    pitch         += "</span>";
-    pitchGraph    += "</span>";
-    pitchPosition += "</span>";
-}
-
-#undef HL_STYLE
-#undef H_STYLE
-
-#undef PITCH_FORMAT
-
-QJsonObject AnkiClient::createAnkiNoteObject(const Kanji &kanji, const bool media)
-{
-    /* Build common parts of a note */
-    QJsonObject note;
-    QJsonObject fieldsObj;
-    buildCommonNote(note, fieldsObj, m_currentConfig->kanjiFields, media);
-
-    /* Set Term and Model */
-    note[ANKI_NOTE_DECK] = m_currentConfig->kanjiDeck;
-    note[ANKI_NOTE_MODEL] = m_currentConfig->kanjiModel;
-
-    /* Build Note Fields */
-    QString clozeBody   = QString(kanji.clozeBody).replace('\n', "<br>");
-    QString clozePrefix = QString(kanji.clozePrefix).replace('\n', "<br>");
-    QString clozeSuffix = QString(kanji.clozeSuffix).replace('\n', "<br>");
-    QString sentence    = QString(kanji.sentence).replace('\n', "<br>");
-
-    QString frequencies = buildFrequencies(kanji.frequencies);
-    
-    QString glossary;
-    QString tags;
-    QString strokeCount;
-    QString onyomi;
-    QString kunyomi;
-    if (!kanji.definitions.isEmpty())
-    {
-        glossary += "<ol>";
-        tags     += "<ul>";
-        for (const KanjiDefinition &def : kanji.definitions)
-        {
-            /* Build glossary */
-            if (!def.glossary.isEmpty())
-            {
-                glossary += "<li><i>(";
-                for (const Tag &tag : def.tags)
-                {
-                    glossary += tag.name;
-                    glossary += ", ";
-                }
-                glossary += def.dictionary;
-                glossary += ")</i></li>";
-                glossary += "<ol>";
-                for (const QString &glos : def.glossary)
-                {
-                    glossary += "<li>";
-                    glossary += glos;
-                    glossary += "</li>";
-                }
-                glossary += "</ol>";
-            }
-            
-            /* Build tags */
-            accumulateTags(def.tags, tags);
-
-            /* Find the stroke count if we haven't already */
-            if (strokeCount.isEmpty())
-            {
-                for (auto &pair : def.stats)
-                {
-                    if (pair.first.notes == "Stroke count")
-                    {
-                        strokeCount = pair.second;
-                    }
-                }
-            }
-
-            /* Build onyomi */
-            for (const QString &str : def.onyomi)
-            {
-                onyomi += str;
-                onyomi += ", ";
-            }
-
-            /* Build kunyomi */
-            for (const QString &str : def.kunyomi)
-            {
-                kunyomi += str;
-                kunyomi += ", ";
-            }
-        }
-        glossary += "</ol>";
-        tags     += "</ul>";
-        onyomi.chop(2);
-        kunyomi.chop(2);
-
-        /* Clear out empty results */
-        if (glossary == "<ol></ol>")
-            glossary.clear();
-            /* Clear out an empty tag */
-        if (tags == "<ul></ul>")
-            tags.clear();
-    }
-
-    /* Replace Markers */
-    QJsonArray fieldsWithAudio; 
-    QStringList fields = fieldsObj.keys();
-    for (const QString &field : fields)
-    {
-        QString value = fieldsObj[field].toString();
-
-        value.replace(REPLACE_CHARACTER,    kanji.character);
-        value.replace(REPLACE_KUNYOMI,      kunyomi);
-        value.replace(REPLACE_ONYOMI,       onyomi);
-        value.replace(REPLACE_STROKE_COUNT, strokeCount);
-
-        value.replace(REPLACE_CLOZE_BODY,   clozeBody);
-        value.replace(REPLACE_CLOZE_PREFIX, clozePrefix);
-        value.replace(REPLACE_CLOZE_SUFFIX, clozeSuffix);
-        value.replace(REPLACE_FREQUENCIES,  frequencies);
-        value.replace(REPLACE_GLOSSARY,     glossary);
-        value.replace(REPLACE_SENTENCE,     sentence);
-        value.replace(REPLACE_TAGS,         tags);
-
-        fieldsObj[field] = value;
-    }
-
-    /* Add Fields */
-    note[ANKI_NOTE_FIELDS] = fieldsObj;
+    //TODO actually build note
+//    buildCommonNote(note, fieldsObj, m_currentConfig->termFields, media);
+//
+//    /* Set Term and Model */
+//    note[ANKI_NOTE_DECK] = m_currentConfig->termDeck;
+//    note[ANKI_NOTE_MODEL] = m_currentConfig->termModel;
+//
+//    /* Process Fields */
+//    QString audioFile = AUDIO_FILENAME_FORMAT_STRING.arg(term.reading).arg(term.expression);
+//
+//    QString clozeBody   = QString(term.clozeBody).replace('\n', "<br>");
+//    QString clozePrefix = QString(term.clozePrefix).replace('\n', "<br>");
+//    QString clozeSuffix = QString(term.clozeSuffix).replace('\n', "<br>");
+//    QString sentence    = QString(term.sentence).replace('\n', "<br>");
+//
+//    QString frequencies = buildFrequencies(term.frequencies);
+//
+//    QString furigana;
+//    QString furiganaPlain;
+//    QString reading;
+//    if (term.reading.isEmpty())
+//    {
+//        furigana      = term.expression;
+//        furiganaPlain = term.expression;
+//        reading       = term.expression;
+//    }
+//    else
+//    {
+//        furigana      = FURIGANA_FORMAT_STRING.arg(term.expression).arg(term.reading);
+//        furiganaPlain = term.expression + "[" + term.reading + "]";
+//        reading       = term.reading;
+//    }
+//
+//    QString glossary        = buildGlossary(term.definitions);
+//    QString glossaryCompact = "<ol>";
+//
+//    QString pitch;
+//    QString pitchGraph;
+//    QString pitchPosition;
+//    buildPitchInfo(term.pitches, pitch, pitchGraph, pitchPosition);
+//
+//    for (const TermDefinition &def : term.definitions)
+//    {
+//        for (QString glos : def.glossary)
+//        {
+//            glossaryCompact += "<li>";
+//            glossaryCompact += glos.replace('\n', "</li><li>");
+//            glossaryCompact += "</li>";
+//        }
+//        if (glossaryCompact.endsWith("<li></li>"))
+//            glossaryCompact.chop(9);
+//    }
+//    glossaryCompact        += "</ol>";
+//
+//    QString tags = "<ul>";
+//    accumulateTags(term.tags, tags);
+//    tags        += "</ul>";
+//    if (tags == "<ul></ul>")
+//        tags.clear();
+//
+//    /* Find and replace markers with data */
+//    QStringList fields = m_currentConfig->termFields.keys();
+//    QJsonArray fieldsWithAudio;
+//    for (const QString &field : fields)
+//    {
+//        QString value = fieldsObj[field].toString();
+//
+//        if (value.contains(REPLACE_AUDIO))
+//        {
+//            fieldsWithAudio.append(field);
+//        }
+//        value.replace(REPLACE_AUDIO, "");
+//
+//        value.replace(REPLACE_CLOZE_BODY,      clozeBody);
+//        value.replace(REPLACE_CLOZE_PREFIX,    clozePrefix);
+//        value.replace(REPLACE_CLOZE_SUFFIX,    clozeSuffix);
+//        value.replace(REPLACE_EXPRESSION,      term.expression);
+//        value.replace(REPLACE_FREQUENCIES,     frequencies);
+//        value.replace(REPLACE_FURIGANA,        furigana);
+//        value.replace(REPLACE_FURIGANA_PLAIN,  furiganaPlain);
+//        value.replace(REPLACE_GLOSSARY,        glossary);
+//        value.replace(REPLACE_GLOSSARY_BRIEF,  glossaryCompact);
+//        value.replace(REPLACE_PITCH,           pitch);
+//        value.replace(REPLACE_PITCH_GRAPHS,    pitchGraph);
+//        value.replace(REPLACE_PITCH_POSITIONS, pitchPosition);
+//        value.replace(REPLACE_READING,         reading);
+//        value.replace(REPLACE_SENTENCE,        sentence);
+//        value.replace(REPLACE_TAGS,            tags);
+//
+//        fieldsObj[field] = value;
+//    }
+//    note[ANKI_NOTE_FIELDS] = fieldsObj;
+//
+//    /* Add {audio} marker to the note */
+//    if (media)
+//    {
+//        QJsonArray audio = note[ANKI_NOTE_AUDIO].toArray();
+//        if (!fieldsWithAudio.isEmpty())
+//        {
+//            QJsonObject audObj;
+//
+//            audObj[ANKI_NOTE_URL]      = QString(m_currentConfig->audio.url)
+//                .replace(REPLACE_EXPRESSION, term.expression)
+//                .replace(REPLACE_READING,    reading);
+//            audObj[ANKI_NOTE_FILENAME] = audioFile;
+//            audObj[ANKI_NOTE_FIELDS]   = fieldsWithAudio;
+//            audObj[ANKI_NOTE_SKIPHASH] = m_currentConfig->audio.md5;
+//            audio.append(audObj);
+//        }
+//
+//        if (!audio.isEmpty())
+//        {
+//            note[ANKI_NOTE_AUDIO] = audio;
+//        }
+//    }
 
     return note;
 }
@@ -1274,93 +946,6 @@ void AnkiClient::buildCommonNote(QJsonObject &note, QJsonObject &fieldObj,
             note[ANKI_NOTE_PICTURE] = images;
         }    
     }
-}
-
-QString AnkiClient::buildGlossary(const QList<TermDefinition> &definitions)
-{
-    QString glossary;
-    glossary.append("<div style=\"text-align: left;\"><ol>");
-
-    for (const TermDefinition &def : definitions)
-    {
-        glossary += "<li>";
-
-        glossary += "<i>(";
-        for (const Tag &tag : def.tags)
-        {
-            glossary += tag.name + ", ";
-        }
-        for (const Tag &rule : def.rules)
-        {
-            if (def.tags.contains(rule))
-            {
-                continue;
-            }
-            glossary += rule.name + ", ";
-        }
-        glossary += def.dictionary;
-        glossary += ")</i>";
-
-        glossary += "<ul>";
-        for (QString glos : def.glossary)
-        {
-            glossary += "<li>";
-            glossary += glos.replace('\n', "</li><li>");
-            glossary += "</li>";
-        }
-        if (glossary.endsWith("<li></li>"))
-            glossary.chop(9);
-        glossary += "</ul>";
-
-        glossary += "</li>";
-    }
-
-    glossary.append("</ol></div>");
-
-    return glossary;
-}
-
-QString AnkiClient::buildFrequencies(const QList<Frequency> &frequencies)
-{
-    if (frequencies.isEmpty())
-        return "";
-
-    QString freqStr;
-    freqStr += "<ul>";
-    for (const Frequency &freq : frequencies)
-    {
-        freqStr += "<li>";
-        freqStr += freq.dictionary;
-        freqStr += freq.dictionary.endsWith(':') ? " " : ": ";
-        freqStr += QString::number(freq.freq);
-        freqStr += "</li>";
-    }
-    freqStr += "</ul>";
-
-    if (freqStr == "<ul></ul>")
-        freqStr.clear();
-
-    return freqStr;
-}
-
-QString &AnkiClient::accumulateTags(const QList<Tag> &tags, QString &tagStr)
-{
-    if (tags.isEmpty())
-        return tagStr;
-    
-    for (const Tag &tag : tags)
-    {
-        tagStr += "<li>";
-        tagStr += tag.name;
-        if (!tag.notes.isEmpty())
-        {
-            tagStr += ": ";
-            tagStr += tag.notes;
-        }
-        tagStr += "</li>";
-    }
-
-    return tagStr;
 }
 
 AnkiReply *AnkiClient::openBrowse(const QString &deck, const QString &query)
