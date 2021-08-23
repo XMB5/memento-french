@@ -119,12 +119,14 @@ void SubtitleWidget::positionChanged(const double value)
     }
 }
 
-void SubtitleWidget::mouseMoveEvent(QMouseEvent *event)
+void SubtitleWidget::mousePressEvent(QMouseEvent *event)
 {
     if (m_paused) {
         for (int i = 0; i < this->charBoundaries.size(); i++) {
             QRectF &charBoundary = this->charBoundaries[i];
-            if (charBoundary.contains(event->pos())) {
+            qreal adjustFactor = this->font().pointSizeF() / 4.0;
+            QRectF charBoundaryExpanded = charBoundary.adjusted(-adjustFactor, -adjustFactor, adjustFactor, adjustFactor);
+            if (charBoundaryExpanded.contains(event->pos())) {
                 if (i != m_currentIndex) {
                     //TODO check if same word?
                     for (SubtitlePhrase &phrase : this->subtitleInfo.phrases) {

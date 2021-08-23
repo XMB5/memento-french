@@ -191,13 +191,18 @@ void TermWidget::setTerm(const SubtitleExtract &extract) {
 
     QString html = "<html><head><style>" + GlobalMediator::getGlobalMediator()->getDictionary()->termCss + "</style><body>";
 
+    for (auto &def : extract.phrase.dictEntry->definitions) {
+        html += def;
+    }
+
     // the extract might not have any definitions because the word isn't a lemma
     // we need to check all forms of the word -> find lemmas -> add their definitions
-
     std::multimap<QString, SyntaxInfo> lemmas;
 
     for (SyntaxInfo &info: extract.phrase.dictEntry->syntaxInfos) {
-        lemmas.emplace(info.lemma, info);
+        if (!info.lemma.isEmpty()) {
+            lemmas.emplace(info.lemma, info);
+        }
     }
 
     auto it = lemmas.begin();

@@ -559,11 +559,8 @@ void MainWindow::setDefinitionWidgetLocation()
     }
     
     int y = m_subtitle.subtitleWidget->pos().y() - m_definition->height();
-    if (y < 0)
-    {
-        y = m_subtitle.subtitleWidget->pos().y() + m_subtitle.subtitleWidget->height();
-    }
-
+    // if y < 0, then there is nothing we can do
+    // either we clip the top of the widget or the widget will cover subtitle text
 
     m_definition->move(x, y);
 }
