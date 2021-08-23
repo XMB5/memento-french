@@ -96,7 +96,8 @@ SubtitleInfo FrenchProcessor::processSubtitle(QString rawText) {
             colors.fgColor = Qt::white;
         } else {
             if (entry->syntaxInfos.isEmpty()) {
-                colors.fgColor = Qt::yellow;
+                // example word: surendettement
+                colors.fgColor = Qt::white;
             } else {
                 bool masculine = true;
                 bool feminine = true;
@@ -109,9 +110,9 @@ SubtitleInfo FrenchProcessor::processSubtitle(QString rawText) {
                     }
                 }
                 if (masculine && !feminine) {
-                    colors.fgColor = Qt::blue;
+                    colors.fgColor = QColor(127, 127, 255);
                 } else if (!masculine && feminine) {
-                    colors.fgColor = Qt::red;
+                    colors.fgColor = QColor(255, 127, 127);
                 } else {
                     colors.fgColor = Qt::white;
                 }
