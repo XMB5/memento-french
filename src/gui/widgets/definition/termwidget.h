@@ -50,7 +50,7 @@ Q_SIGNALS:
 private Q_SLOTS:
     void addNote();
     void openAnki();
-    void playAudio(QString url, const QString &hash);
+    void playAudio(QString lang, QString tld, bool slow);
     void showAudioSources(const QPoint &pos);
     void searchKanji(const QString &ch);
 

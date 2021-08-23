@@ -50,7 +50,7 @@ public:
 
     void clearFiles();
 
-    AudioPlayerReply *playAudio(QString text, QString language, QString tld);
+    AudioPlayerReply *playAudio(QString text, QString language, QString tld, bool slow);
 
 private:
     mpv_handle                       *m_mpv;
@@ -58,7 +58,6 @@ private:
     QHash<QString, QTemporaryFile *>  m_files;
     QMutex                            m_fileLock;
 
-    QTemporaryFile* downloadAudio(QString text, QString lang, QString tld);
     bool playFile(const QTemporaryFile *file);
 };
 

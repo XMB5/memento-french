@@ -102,11 +102,11 @@ bool AudioPlayer::playFile(const QTemporaryFile *file)
     return true;
 }
 
-AudioPlayerReply *AudioPlayer::playAudio(QString text, QString lang, QString tld)
+AudioPlayerReply *AudioPlayer::playAudio(QString text, QString lang, QString tld, bool slow)
 {
     /* Check if the file exists */
     m_fileLock.lock();
-    QString cacheKey = text + '\x00' + lang + '\x00' + tld;  // null bytes are allowed in QString
+    QString cacheKey = text + '\x00' + lang + '\x00' + tld + '\x00' + (slow ? 's' : 'f');  // null bytes are allowed in QString
     QTemporaryFile *file = m_files[cacheKey];
     if (file)
     {
@@ -153,8 +153,14 @@ AudioPlayerReply *AudioPlayer::playAudio(QString text, QString lang, QString tld
             process->deleteLater();
         }
     });
+
     QStringList args;
-    args << "--lang" << lang << "--nocheck" << "--tld" << tld << "--output" << file->fileName() << "--" << text;
+    args << "--lang" << lang << "--nocheck" << "--tld" << tld << "--output" << file->fileName();
+    if (slow) {
+        args << "--slow";
+    }
+    args << "--" << text;
+
     qDebug() << "run gtts-cli" << args;
     process->start("gtts-cli", args);
 

@@ -215,33 +215,34 @@ bool AnkiClient::readConfigFromFile(const QString &filename)
             profile[CONFIG_TERM]  = obj;
             profile[CONFIG_KANJI] = QJsonObject();
         }
-        if (profile[CONFIG_AUDIO_NAME].isNull())
-        {
-            modified = true;
-            profile[CONFIG_AUDIO_NAME] = SETTINGS_AUDIO_SRC_NAME_DEFAULT;
-            profile.remove(CONFIG_AUDIO_URL);
-            profile.remove(CONFIG_AUDIO_HASH);
-        }
-        if (profile[CONFIG_AUDIO_URL].isNull())
-        {
-            modified = true;
-            profile[CONFIG_AUDIO_URL] = SETTINGS_AUDIO_SRC_URL_DEFAULT;
-        }
-        if (profile[CONFIG_AUDIO_HASH].isNull())
-        {
-            modified = true;
-            profile[CONFIG_AUDIO_HASH] = SETTINGS_AUDIO_SRC_MD5_DEFAULT;
-        }
-        if (profile[CONFIG_AUDIO_PAD_START].isNull())
-        {
-            modified = true;
-            profile[CONFIG_AUDIO_PAD_START] = DEFAULT_AUDIO_PAD_START;
-        }
-        if (profile[CONFIG_AUDIO_PAD_END].isNull())
-        {
-            modified = true;
-            profile[CONFIG_AUDIO_PAD_END] = DEFAULT_AUDIO_PAD_END;
-        }
+        //TODO: audio config
+//        if (profile[CONFIG_AUDIO_NAME].isNull())
+//        {
+//            modified = true;
+//            profile[CONFIG_AUDIO_NAME] = SETTINGS_AUDIO_SRC_NAME_DEFAULT;
+//            profile.remove(CONFIG_AUDIO_URL);
+//            profile.remove(CONFIG_AUDIO_HASH);
+//        }
+//        if (profile[CONFIG_AUDIO_URL].isNull())
+//        {
+//            modified = true;
+//            profile[CONFIG_AUDIO_URL] = SETTINGS_AUDIO_SRC_URL_DEFAULT;
+//        }
+//        if (profile[CONFIG_AUDIO_HASH].isNull())
+//        {
+//            modified = true;
+//            profile[CONFIG_AUDIO_HASH] = SETTINGS_AUDIO_SRC_MD5_DEFAULT;
+//        }
+//        if (profile[CONFIG_AUDIO_PAD_START].isNull())
+//        {
+//            modified = true;
+//            profile[CONFIG_AUDIO_PAD_START] = DEFAULT_AUDIO_PAD_START;
+//        }
+//        if (profile[CONFIG_AUDIO_PAD_END].isNull())
+//        {
+//            modified = true;
+//            profile[CONFIG_AUDIO_PAD_END] = DEFAULT_AUDIO_PAD_END;
+//        }
 
         if (modified)
             profiles[i] = profile;
@@ -320,7 +321,8 @@ bool AnkiClient::readConfigFromFile(const QString &filename)
         config->duplicatePolicy = (AnkiConfig::DuplicatePolicy)profile[CONFIG_DUPLICATE].toInt(AnkiConfig::DuplicatePolicy::DifferentDeck);
         config->screenshotType  = (AnkiConfig::FileType)profile[CONFIG_SCREENSHOT].toInt(AnkiConfig::FileType::jpg);
         config->audio.name      = profile[CONFIG_AUDIO_NAME].toString();
-        config->audio.url       = profile[CONFIG_AUDIO_URL].toString();
+        //TODO: audio url
+        //config->audio.url       = profile[CONFIG_AUDIO_URL].toString();
         config->audio.name      = profile[CONFIG_AUDIO_HASH].toString();
         config->audioPadStart   = profile[CONFIG_AUDIO_PAD_START].toDouble();
         config->audioPadEnd     = profile[CONFIG_AUDIO_PAD_END].toDouble();
@@ -373,9 +375,10 @@ bool AnkiClient::writeConfigToFile(const QString &filename)
         configObj[CONFIG_PORT]            = config->port;
         configObj[CONFIG_DUPLICATE]       = config->duplicatePolicy;
         configObj[CONFIG_SCREENSHOT]      = config->screenshotType;
-        configObj[CONFIG_AUDIO_NAME]      = config->audio.name;
-        configObj[CONFIG_AUDIO_URL]       = config->audio.url;
-        configObj[CONFIG_AUDIO_HASH]      = config->audio.md5;
+        //TODO: audio config
+//        configObj[CONFIG_AUDIO_NAME]      = config->audio.name;
+//        configObj[CONFIG_AUDIO_URL]       = config->audio.url;
+//        configObj[CONFIG_AUDIO_HASH]      = config->audio.md5;
         configObj[CONFIG_AUDIO_PAD_START] = config->audioPadStart;
         configObj[CONFIG_AUDIO_PAD_END]   = config->audioPadEnd;
         configObj[CONFIG_TAGS]            = config->tags;
@@ -409,9 +412,10 @@ void AnkiClient::setDefaultConfig()
     config->port            = DEFAULT_PORT;
     config->duplicatePolicy = DEFAULT_DUPLICATE_POLICY;
     config->screenshotType  = DEFAULT_SCREENSHOT;
-    config->audio.name      = SETTINGS_AUDIO_SRC_NAME_DEFAULT;
-    config->audio.url       = SETTINGS_AUDIO_SRC_URL_DEFAULT;
-    config->audio.md5       = SETTINGS_AUDIO_SRC_MD5_DEFAULT;
+    //TODO: audio defaults
+//    config->audio.name      = SETTINGS_AUDIO_SRC_NAME_DEFAULT;
+//    config->audio.url       = SETTINGS_AUDIO_SRC_URL_DEFAULT;
+//    config->audio.md5       = SETTINGS_AUDIO_SRC_MD5_DEFAULT;
     config->audioPadStart   = DEFAULT_AUDIO_PAD_START;
     config->audioPadEnd     = DEFAULT_AUDIO_PAD_END;
     config->tags.append(DEFAULT_TAGS);

@@ -29,17 +29,9 @@
 struct AudioSource
 {
     QString name;
-    QString url;
-    QString md5;
-
-    AudioSource &operator=(const AudioSource &rhs)
-    {
-        name = rhs.name;
-        url  = rhs.url;
-        md5  = rhs.md5;
-
-        return *this;
-    }
+    QString lang;
+    QString tld;
+    bool slow = false;
 };
 
 struct AnkiConfig

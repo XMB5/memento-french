@@ -27,6 +27,7 @@
 #include "../../../audio/audioplayer.h"
 
 #include <QMenu>
+#include <utility>
 
 #define KANJI_STYLE_STRING      (QString("<style>a { color: %1; border: 0; text-decoration: none; }</style>"))
 #define KANJI_FORMAT_STRING     (QString("<a href=\"%1\">%1</a>"))
@@ -71,7 +72,7 @@ TermWidget::TermWidget(const SubtitleExtract    *term,
             if (!m_sources->isEmpty())
             {
                 const AudioSource &src = m_sources->first();
-                playAudio(src.url, src.md5);
+                playAudio(src.lang, src.tld, src.slow);
             }
         } 
     );
@@ -139,11 +140,11 @@ void TermWidget::openAnki()
 //    );
 }
 
-void TermWidget::playAudio(QString url, const QString &hash)
+void TermWidget::playAudio(QString lang, QString tld, bool slow)
 {
     m_ui->buttonAudio->setEnabled(false);
     QString substring = m_term->subtitleText.mid(m_term->phrase.start, m_term->phrase.stop - m_term->phrase.start);
-    AudioPlayerReply *reply = GlobalMediator::getGlobalMediator()->getAudioPlayer()->playAudio(substring, "fr", "fr");
+    AudioPlayerReply *reply = GlobalMediator::getGlobalMediator()->getAudioPlayer()->playAudio(substring, std::move(lang), std::move(tld), slow);
     m_ui->buttonAudio->setEnabled(reply == nullptr);
 
     if (reply)
@@ -166,7 +167,7 @@ void TermWidget::showAudioSources(const QPoint &pos)
     QMenu contextMenu("Audio Sources", m_ui->buttonAudio);
     for (const AudioSource &src : *m_sources)
     {
-        contextMenu.addAction(src.name, this, [=] { playAudio(src.url, src.md5); });
+        contextMenu.addAction(src.name, this, [=] { playAudio(src.lang, src.tld, src.slow); });
     }
     contextMenu.exec(m_ui->buttonAudio->mapToGlobal(pos));
 }

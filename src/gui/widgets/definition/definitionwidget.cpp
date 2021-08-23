@@ -52,17 +52,17 @@ DefinitionWidget::DefinitionWidget(const QList<SubtitleExtract *> *terms, QWidge
     settings.endGroup();
 
     /* Get audio sources */
-    size_t size = settings.beginReadArray(SETTINGS_AUDIO_SRC);
-    for (size_t i = 0; i < size; ++i)
-    {
-        settings.setArrayIndex(i);
-        m_sources.append(AudioSource{
-            settings.value(SETTINGS_AUDIO_SRC_NAME, SETTINGS_AUDIO_SRC_NAME_DEFAULT).toString(),
-            settings.value(SETTINGS_AUDIO_SRC_URL,  SETTINGS_AUDIO_SRC_URL_DEFAULT ).toString(),
-            settings.value(SETTINGS_AUDIO_SRC_MD5,  SETTINGS_AUDIO_SRC_MD5_DEFAULT ).toString(),
-        });
+    QString tlds[] = {"fr", "ca"};
+    for (auto &tld : tlds) {
+        for (int slow = 0; slow <= 1; slow++) {
+            m_sources.append(AudioSource{
+                "fr-" + tld + (slow == 1 ? "-slow" : ""),
+                "fr",
+                tld,
+                bool(slow)
+            });
+        }
     }
-    settings.endArray();
 
     /* Add the terms */
     showTerms(0, limit);

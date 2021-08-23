@@ -17,17 +17,6 @@ target_link_libraries(
 )
 
 add_library(
-    audiosourcesettings
-    audiosourcesettings.cpp
-    audiosourcesettings.ui
-)
-target_link_libraries(
-    audiosourcesettings
-    globalmediator
-    Qt5::Widgets
-)
-
-add_library(
     searchsettings
     searchsettings.cpp
     searchsettings.ui
@@ -59,5 +48,4 @@ target_link_libraries(
     ankisettings
     searchsettings
     interfacesettings
-    audiosourcesettings
 )
