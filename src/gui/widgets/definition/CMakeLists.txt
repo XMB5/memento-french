@@ -1,7 +1,5 @@
 add_library(
     definitionwidget
-    definitionwidget.cpp
-    definitionwidget.ui
     termwidget.cpp
     termwidget.ui
 )

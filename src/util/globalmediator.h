@@ -135,7 +135,7 @@ Q_SIGNALS:
     void requestSetSubtitleVisibility(const bool value) const;
 
     /* Subtitle Widget Signals */
-    void termsChanged(const QList<SubtitleExtract *> *terms) const;
+    void termChanged(SubtitleExtract *term) const;
     void subtitleExpired() const;
 
     /* Definition Signals */

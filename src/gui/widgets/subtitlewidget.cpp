@@ -128,15 +128,11 @@ void SubtitleWidget::mousePressEvent(QMouseEvent *event)
             QRectF charBoundaryExpanded = charBoundary.adjusted(-adjustFactor, -adjustFactor, adjustFactor, adjustFactor);
             if (charBoundaryExpanded.contains(event->pos())) {
                 if (i != m_currentIndex) {
-                    //TODO check if same word?
                     for (SubtitlePhrase &phrase : this->subtitleInfo.phrases) {
                         if (i >= phrase.start && i < phrase.stop) {
-                            auto *terms = new QList<SubtitleExtract*>;
-                            auto *extract = new SubtitleExtract;
-                            extract->subtitleText = this->m_rawText;
-                            extract->phrase = phrase;
-                            terms->append(extract);
-                            Q_EMIT GlobalMediator::getGlobalMediator()->termsChanged(terms);
+                            auto *extract = new SubtitleExtract{this->m_rawText, phrase};
+                            Q_EMIT GlobalMediator::getGlobalMediator()->termChanged(extract);
+                            break;
                         }
                     }
 

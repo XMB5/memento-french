@@ -40,17 +40,8 @@
     #define READING_STYLE       (QString("QLabel { font-size: 12pt; }"))
 #endif
 
-TermWidget::TermWidget(const SubtitleExtract    *term,
-                       const QList<AudioSource> *sources,
-                       QWidget                  *parent) 
-    : QWidget(parent), 
-      m_ui(new Ui::TermWidget), 
-      m_term(term),
-      m_sources(sources)
-{
+TermWidget::TermWidget(QWidget *parent) : QWidget(parent), m_ui(new Ui::TermWidget), m_term(nullptr) {
     m_ui->setupUi(this);
-
-    //m_ui->textEdit->document()->setDefaultStyleSheet(GlobalMediator::getGlobalMediator()->getDictionary()->termCss);
 
     IconFactory *factory = IconFactory::create();
 
@@ -61,17 +52,16 @@ TermWidget::TermWidget(const SubtitleExtract    *term,
     m_ui->buttonAnkiOpen->setVisible(false);
 
     m_ui->buttonAudio->setIcon(factory->getIcon(IconFactory::Icon::audio));
-    m_ui->buttonAudio->setVisible(!m_sources->isEmpty());
-
-    setTerm(*term);
+    auto &sources = GlobalMediator::getGlobalMediator()->getAudioPlayer()->audioSources;
+    m_ui->buttonAudio->setVisible(!sources.isEmpty());
 
     connect(m_ui->buttonAddCard,  &QToolButton::clicked,  this, &TermWidget::addNote);
     connect(m_ui->buttonAnkiOpen, &QToolButton::clicked,  this, &TermWidget::openAnki);
     connect(m_ui->buttonAudio,    &QToolButton::clicked,  this, 
         [=] {
-            if (!m_sources->isEmpty())
+            if (!sources.isEmpty())
             {
-                const AudioSource &src = m_sources->first();
+                const AudioSource &src = sources.first();
                 playAudio(src.lang, src.tld, src.slow);
             }
         } 
@@ -81,6 +71,7 @@ TermWidget::TermWidget(const SubtitleExtract    *term,
 
 TermWidget::~TermWidget()
 {
+    delete m_term;
     delete m_ui;
 }
 
@@ -165,34 +156,27 @@ void TermWidget::playAudio(QString lang, QString tld, bool slow)
 void TermWidget::showAudioSources(const QPoint &pos)
 {
     QMenu contextMenu("Audio Sources", m_ui->buttonAudio);
-    for (const AudioSource &src : *m_sources)
+    for (const AudioSource &src : GlobalMediator::getGlobalMediator()->getAudioPlayer()->audioSources)
     {
         contextMenu.addAction(src.name, this, [=] { playAudio(src.lang, src.tld, src.slow); });
     }
     contextMenu.exec(m_ui->buttonAudio->mapToGlobal(pos));
 }
 
-void TermWidget::searchKanji(const QString &ch)
-{
-    //TODO search
-//    Kanji *kanji = GlobalMediator::getGlobalMediator()->getDictionary()->searchKanji(ch);
-//    if (kanji)
-//    {
-//        kanji->sentence    = m_term->sentence;
-//        kanji->clozePrefix = m_term->clozePrefix;
-//        kanji->clozeBody   = m_term->clozeBody;
-//        kanji->clozeSuffix = m_term->clozeSuffix;
-//        Q_EMIT kanjiSearched(kanji);
-//    }
-}
-
-void TermWidget::setTerm(const SubtitleExtract &extract) {
-    QStringRef phraseStr = extract.subtitleText.midRef(extract.phrase.start, extract.phrase.stop - extract.phrase.start);
+/**
+ * Change to a new term
+ * @param extract TermWidget takes ownership (will delete when done)
+ */
+void TermWidget::setTerm(SubtitleExtract *extract) {
+    delete this->m_term;
+    this->m_term = extract;
+    
+    QStringRef phraseStr = m_term->subtitleText.midRef(m_term->phrase.start, m_term->phrase.stop - m_term->phrase.start);
     this->m_ui->extractLabel->setText(phraseStr.toString());
 
     QString html = "<html><head><style>" + GlobalMediator::getGlobalMediator()->getDictionary()->termCss + "</style><body>";
 
-    for (auto &def : extract.phrase.dictEntry->definitions) {
+    for (auto &def : m_term->phrase.dictEntry->definitions) {
         html += def;
     }
 
@@ -200,7 +184,7 @@ void TermWidget::setTerm(const SubtitleExtract &extract) {
     // we need to check all forms of the word -> find lemmas -> add their definitions
     std::multimap<QString, SyntaxInfo> lemmas;
 
-    for (SyntaxInfo &info: extract.phrase.dictEntry->syntaxInfos) {
+    for (SyntaxInfo &info: m_term->phrase.dictEntry->syntaxInfos) {
         if (!info.lemma.isEmpty()) {
             lemmas.emplace(info.lemma, info);
         }
@@ -210,7 +194,7 @@ void TermWidget::setTerm(const SubtitleExtract &extract) {
     auto end = lemmas.end();
     while (it != end) {
         QString lemma = it->first;
-        DictEntry *lemmaEntry = lemma.isEmpty() ? extract.phrase.dictEntry : GlobalMediator::getGlobalMediator()->getDictionary()->map[lemma];
+        DictEntry *lemmaEntry = lemma.isEmpty() ? m_term->phrase.dictEntry : GlobalMediator::getGlobalMediator()->getDictionary()->map[lemma];
 
         if (lemmaEntry != nullptr) {
             for (auto &def : lemmaEntry->definitions) {
@@ -223,4 +207,14 @@ void TermWidget::setTerm(const SubtitleExtract &extract) {
 
     html += "</body></html>";
     this->m_ui->webEngineView->setHtml(html);
+}
+
+void TermWidget::hideEvent(QHideEvent *event)
+{
+    Q_EMIT GlobalMediator::getGlobalMediator()->definitionsHidden();
+}
+
+void TermWidget::showEvent(QShowEvent *event)
+{
+    Q_EMIT GlobalMediator::getGlobalMediator()->definitionsShown();
 }

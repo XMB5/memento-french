@@ -22,6 +22,7 @@
 #define TERMWIDGET_H
 
 #include <QWidget>
+#include <QMouseEvent>
 
 #include "../common/flowlayout.h"
 #include "../../../dict/expression.h"
@@ -37,29 +38,37 @@ class TermWidget : public QWidget
     Q_OBJECT
 
 public:
-    TermWidget(const SubtitleExtract    *term,
-               const QList<AudioSource> *sources,
-               QWidget                  *parent = 0);
+    TermWidget(QWidget *parent = nullptr);
     ~TermWidget();
 
     void setAddable(bool value);
+    void setTerm(SubtitleExtract *term);
 
-Q_SIGNALS:
-    void kanjiSearched(const SubtitleExtract *kanji);
+protected:
+    void hideEvent(QHideEvent *event) override;
+    void showEvent(QShowEvent *event) override;
+    /* Prevents these events from being sent to mpv when widget has focus */
+    void mouseMoveEvent(QMouseEvent *event) override
+    { event->accept(); }
+    void mouseReleaseEvent(QMouseEvent *event) override
+    { event->accept(); }
+    void mouseDoubleClickEvent(QMouseEvent *event) override
+    { event->accept(); }
+    void mousePressEvent(QMouseEvent *event) override
+    { event->accept(); }
+    void wheelEvent(QWheelEvent *event) override
+    { event->accept(); }
 
 private Q_SLOTS:
     void addNote();
     void openAnki();
     void playAudio(QString lang, QString tld, bool slow);
     void showAudioSources(const QPoint &pos);
-    void searchKanji(const QString &ch);
 
 private:
-    Ui::TermWidget           *m_ui;
-    const SubtitleExtract    *m_term;
-    const QList<AudioSource> *m_sources;
+    Ui::TermWidget *m_ui;
+    SubtitleExtract *m_term;
 
-    void setTerm(const SubtitleExtract &term);
 };
 
 #endif // TERMWIDGET_H

@@ -42,7 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
       m_ui(new Ui::MainWindow),
       m_maximized(false),
       m_manager(new QNetworkAccessManager),
-      m_definition(nullptr)
+      m_term(nullptr)
 {
     m_ui->setupUi(this);
 
@@ -104,6 +104,11 @@ MainWindow::MainWindow(QWidget *parent)
     m_subtitle.layoutPlayerOverlay->addWidget(m_subtitle.spacerWidget);
 
     repositionSubtitles();
+
+    // we re-use the same TermWidget for all terms
+    // this way, the TermWidget can re-use the QWebEngineView,
+    // and the QWebEngineView only has to parse the css once
+    m_term = new TermWidget(this);
 
     /* Set the theme */
     setTheme();
@@ -188,17 +193,17 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_ui->actionSubtitleTwoNone, &QAction::triggered, m_player, &PlayerAdapter::disableSubtitleTwo);
 
     /* Definition Changes */
-    connect(m_ui->splitterPlayerSubtitles, &QSplitter::splitterMoved, this, &MainWindow::deleteDefinitionWidget);
-    connect(m_mediator, &GlobalMediator::termsChanged,            this, &MainWindow::setTerms);
-    connect(m_mediator, &GlobalMediator::requestDefinitionDelete, this, &MainWindow::deleteDefinitionWidget);
-    connect(m_mediator, &GlobalMediator::playerSubtitleChanged,   this, &MainWindow::deleteDefinitionWidget);
-    connect(m_mediator, &GlobalMediator::subtitleExpired,         this, &MainWindow::deleteDefinitionWidget);
-    connect(m_mediator, &GlobalMediator::subtitleListShown,       this, &MainWindow::deleteDefinitionWidget);
-    connect(m_mediator, &GlobalMediator::subtitleListHidden,      this, &MainWindow::deleteDefinitionWidget);
+    connect(m_ui->splitterPlayerSubtitles, &QSplitter::splitterMoved, this, &MainWindow::hideTermWidget);
+    connect(m_mediator, &GlobalMediator::termChanged, this, &MainWindow::setTerm);
+    connect(m_mediator, &GlobalMediator::requestDefinitionDelete, this, &MainWindow::hideTermWidget);
+    connect(m_mediator, &GlobalMediator::playerSubtitleChanged, this, &MainWindow::hideTermWidget);
+    connect(m_mediator, &GlobalMediator::subtitleExpired, this, &MainWindow::hideTermWidget);
+    connect(m_mediator, &GlobalMediator::subtitleListShown, this, &MainWindow::hideTermWidget);
+    connect(m_mediator, &GlobalMediator::subtitleListHidden, this, &MainWindow::hideTermWidget);
     connect(m_mediator, &GlobalMediator::playerPauseStateChanged, this, 
         [=] (const bool paused) { 
             if (!paused)
-                deleteDefinitionWidget();
+                hideTermWidget();
         }
     );
 
@@ -221,7 +226,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     /* Theme Changes */
     connect(m_mediator, &GlobalMediator::interfaceSettingsChanged, this, &MainWindow::setTheme);
-    connect(m_mediator, &GlobalMediator::requestThemeRefresh,      this, &MainWindow::deleteDefinitionWidget);
+    connect(m_mediator, &GlobalMediator::requestThemeRefresh,      this, &MainWindow::hideTermWidget);
 
     loadWindowSettings();
 }
@@ -233,7 +238,7 @@ MainWindow::~MainWindow()
 
     /* Widgets */
     delete m_ui;
-    delete m_definition;
+    delete m_term;
     delete m_optionsWindow;
     delete m_aboutWindow;
 
@@ -324,14 +329,14 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 {
     event->ignore();
     repositionSubtitles();
-    deleteDefinitionWidget();
+    hideTermWidget();
     QMainWindow::resizeEvent(event);
 }
 
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
     event->ignore();
-    deleteDefinitionWidget();
+    hideTermWidget();
     QMainWindow::mousePressEvent(event);
 }
 
@@ -443,16 +448,11 @@ void MainWindow::setFullscreen(bool value)
     }
 }
 
-void MainWindow::setTerms(const QList<SubtitleExtract *> *terms)
+void MainWindow::setTerm(SubtitleExtract *term)
 {
-    deleteDefinitionWidget();
-    
-    m_definition = new DefinitionWidget(terms, m_ui->player);
-    setDefinitionWidgetLocation();
-    if (m_definition)
-    {
-        m_definition->show();
-    }
+    m_term->setTerm(term);
+    setTermWidgetLocation();
+    m_term->show();
 }
 
 void MainWindow::repositionSubtitles()
@@ -544,41 +544,35 @@ void MainWindow::updateAnkiProfileMenu()
     m_ui->menuAnkiProfile->menuAction()->setVisible(m_ankiClient->isEnabled());
 }
 
-void MainWindow::setDefinitionWidgetLocation()
+void MainWindow::setTermWidgetLocation()
 {
     const QPoint mousePos = mapFromGlobal(QCursor::pos());
 
-    int x = mousePos.x() - (m_definition->width() / 2);
+    int x = mousePos.x() - (m_term->width() / 2);
     if (x < 0)
     {
         x = 0;
     }
-    else if (x > m_ui->player->width() - m_definition->width())
+    else if (x > m_ui->player->width() - m_term->width())
     {
-        x = m_ui->player->width() - m_definition->width();
+        x = m_ui->player->width() - m_term->width();
     }
     
-    int y = m_subtitle.subtitleWidget->pos().y() - m_definition->height();
+    int y = m_subtitle.subtitleWidget->pos().y() - m_term->height();
     // if y < 0, then there is nothing we can do
     // either we clip the top of the widget or the widget will cover subtitle text
 
-    m_definition->move(x, y);
+    m_term->move(x, y);
 }
 
-void MainWindow::deleteDefinitionWidget()
+void MainWindow::hideTermWidget()
 {
-    if (m_definition)
-    {
-        m_definition->hide();
-        m_definition->deleteLater();
-    }
-    m_definition = nullptr;
+    m_term->hide();
 }
 
 inline bool MainWindow::isMouseOverPlayer()
 {
-    return !m_ui->controls->underMouse() && !m_subtitle.subtitleWidget->underMouse() &&
-           (m_definition == nullptr || m_definition && !m_definition->underMouse());
+    return !m_ui->controls->underMouse() && !m_subtitle.subtitleWidget->underMouse() && !m_term->underMouse();
 }
 
 void MainWindow::hideControls()
@@ -586,7 +580,7 @@ void MainWindow::hideControls()
     if (isFullScreen() && isMouseOverPlayer())
     {
         m_ui->controls->hide();
-        deleteDefinitionWidget();
+        hideTermWidget();
     }
 }
 

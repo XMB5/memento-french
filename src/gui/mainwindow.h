@@ -23,7 +23,7 @@
 
 #include <QMainWindow>
 
-#include "widgets/definition/definitionwidget.h"
+#include "widgets/definition/termwidget.h"
 #include "widgets/settings/optionswindow.h"
 #include "widgets/aboutwindow.h"
 #include "widgets/subtitlewidget.h"
@@ -69,10 +69,10 @@ private Q_SLOTS:
     void updateSubScale(const double inc);
     void moveSubtitles(const double inc);
     void setTracks(QList<const Track *> tracks);
-    void setTerms(const QList<SubtitleExtract *> *terms);
+    void setTerm(SubtitleExtract *term);
     void updateAnkiProfileMenu();
-    void setDefinitionWidgetLocation();
-    void deleteDefinitionWidget();
+    void setTermWidgetLocation();
+    void hideTermWidget();
     void hideControls();
     void showErrorMessage(const QString title, const QString error) const;
     void showInfoMessage (const QString title, const QString error) const;
@@ -89,14 +89,14 @@ protected:
     void resizeEvent(QResizeEvent *event) override;
 
 private:
-    Ui::MainWindow   *m_ui;
+    Ui::MainWindow *m_ui;
 
-    GlobalMediator   *m_mediator;
-    PlayerAdapter    *m_player;
-    DefinitionWidget *m_definition;
-    AnkiClient       *m_ankiClient;
-    OptionsWindow    *m_optionsWindow;  
-    AboutWindow      *m_aboutWindow;
+    GlobalMediator *m_mediator;
+    PlayerAdapter *m_player;
+    TermWidget *m_term;
+    AnkiClient *m_ankiClient;
+    OptionsWindow *m_optionsWindow;
+    AboutWindow *m_aboutWindow;
 
     struct SubtitleUi
     {
