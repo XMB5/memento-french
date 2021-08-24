@@ -117,35 +117,10 @@ void AnkiSettings::clearConfigs()
     }
 }
 
-void AnkiSettings::populateAudioSources()
-{
-    m_audioSources.clear();
-    //TODO audio sources
-//
-//    QSettings settings;
-//
-//    size_t size = settings.beginReadArray(SETTINGS_AUDIO_SRC);
-//    for (size_t i = 0; i < size; ++i)
-//    {
-//        settings.setArrayIndex(i);
-//
-//        AudioSource src {
-//            settings.value(SETTINGS_AUDIO_SRC_NAME).toString(),
-//            settings.value(SETTINGS_AUDIO_SRC_URL).toString(),
-//            settings.value(SETTINGS_AUDIO_SRC_MD5).toString()
-//        };
-//
-//        m_audioSources.insert(src.name, src);
-//    }
-//
-//    settings.endArray();
-}
-
 void AnkiSettings::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
 
-    populateAudioSources();
     AnkiClient *client = GlobalMediator::getGlobalMediator()->getAnkiClient();
     m_ui->checkBoxEnabled->setChecked(client->isEnabled());
     m_configs        = client->getConfigs();
@@ -418,7 +393,11 @@ void AnkiSettings::populateFields(const QString &profile, const AnkiConfig *conf
     );
 
     m_ui->comboBoxAudioSrc->clear();
-    m_ui->comboBoxAudioSrc->addItems(m_audioSources.keys());
+    QStringList audioSourceNames;
+    for (auto &src : GlobalMediator::getGlobalMediator()->getAudioPlayer()->audioSources) {
+        audioSourceNames << src.name;
+    }
+    m_ui->comboBoxAudioSrc->addItems(audioSourceNames);
     m_ui->comboBoxAudioSrc->setCurrentText(config->audio.name);
 
     m_ui->spinAudioPadStart->setValue(config->audioPadStart);
@@ -528,8 +507,8 @@ void AnkiSettings::applyToConfig(const QString &profile)
     config->screenshotType =
         stringToFileType(m_ui->comboBoxScreenshot->currentText()
     );
-    
-    config->audio = *m_audioSources.find(m_ui->comboBoxAudioSrc->currentText());
+
+    config->audio = GlobalMediator::getGlobalMediator()->getAudioPlayer()->audioSources[m_ui->comboBoxAudioSrc->currentIndex()];
 
     config->audioPadStart = m_ui->spinAudioPadStart->value();
     config->audioPadEnd   = m_ui->spinAudioPadEnd->value();

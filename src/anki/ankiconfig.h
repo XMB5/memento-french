@@ -25,14 +25,7 @@
 #include <QStringList>
 #include <QJsonObject>
 #include <QJsonArray>
-
-struct AudioSource
-{
-    QString name;
-    QString lang;
-    QString tld;
-    bool slow = false;
-};
+#include "../audio/audioplayer.h"
 
 struct AnkiConfig
 {

@@ -21,15 +21,12 @@
 #include "audioplayer.h"
 
 #include "../util/globalmediator.h"
-#include "../util/fileutils.h"
 
 #include <mpv/client.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 #include <QCoreApplication>
 #include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
 #include <QThreadPool>
 #include <QFileInfo>
 #include <QProcess>
@@ -60,14 +57,22 @@ AudioPlayer::AudioPlayer(QObject *parent) : QObject(parent)
         QCoreApplication::exit(EXIT_FAILURE);
     }
 
-    /* Initialize other values */
-    m_manager = new QNetworkAccessManager;
+    QString tlds[] = {"fr", "ca"};
+    for (auto &tld : tlds) {
+        for (int slow = 0; slow <= 1; slow++) {
+            this->audioSources.push_back(AudioSource{
+                "fr-" + tld + (slow == 1 ? "-slow" : ""),
+                "fr",
+                tld,
+                bool(slow)
+            });
+        }
+    }
 }
 
 AudioPlayer::~AudioPlayer()
 {
     mpv_terminate_destroy(m_mpv);
-    delete m_manager;
     clearFiles();
 }
 
@@ -155,7 +160,7 @@ AudioPlayerReply *AudioPlayer::playAudio(QString text, QString lang, QString tld
     });
 
     QStringList args;
-    args << "--lang" << lang << "--nocheck" << "--tld" << tld << "--output" << file->fileName();
+    args << "--lang" << lang << "--nocheck" << "--tld" << tld << "--output" << QFileInfo(*file).absoluteFilePath();
     if (slow) {
         args << "--slow";
     }

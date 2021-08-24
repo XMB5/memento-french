@@ -51,19 +51,6 @@ DefinitionWidget::DefinitionWidget(const QList<SubtitleExtract *> *terms, QWidge
     size_t limit = settings.value(SETTINGS_SEARCH_LIMIT, DEFAULT_LIMIT).toUInt();
     settings.endGroup();
 
-    /* Get audio sources */
-    QString tlds[] = {"fr", "ca"};
-    for (auto &tld : tlds) {
-        for (int slow = 0; slow <= 1; slow++) {
-            m_sources.append(AudioSource{
-                "fr-" + tld + (slow == 1 ? "-slow" : ""),
-                "fr",
-                tld,
-                bool(slow)
-            });
-        }
-    }
-
     /* Add the terms */
     showTerms(0, limit);
     m_ui->scrollArea->verticalScrollBar()->setValue(0);
@@ -180,7 +167,7 @@ void DefinitionWidget::showTerms(const size_t start, const size_t end)
     setUpdatesEnabled(false);
     for (size_t i = start; i < m_terms->size() && i < end; ++i)
     {
-        TermWidget *termWidget = new TermWidget(m_terms->at(i), &m_sources, this);
+        TermWidget *termWidget = new TermWidget(m_terms->at(i), &GlobalMediator::getGlobalMediator()->getAudioPlayer()->audioSources, this);
         connect(termWidget, &TermWidget::kanjiSearched, this, &DefinitionWidget::showKanji);
         m_termWidgets.append(termWidget);
         m_ui->scrollAreaContents->layout()->addWidget(termWidget);

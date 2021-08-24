@@ -21,11 +21,10 @@
 #ifndef AUDIOPLAYER_H
 #define AUDIOPLAYER_H
 
+#include <QList>
 #include <QObject>
-
 #include <QTemporaryFile>
 #include <QMutex>
-#include <QHash>
 #include <QProcess>
 
 struct mpv_handle;
@@ -41,6 +40,13 @@ Q_SIGNALS:
     void result(const bool success);
 };
 
+struct AudioSource {
+    QString name;
+    QString lang;
+    QString tld;
+    bool slow = false;
+};
+
 class AudioPlayer : public QObject
 {
     Q_OBJECT
@@ -51,12 +57,12 @@ public:
     void clearFiles();
 
     AudioPlayerReply *playAudio(QString text, QString language, QString tld, bool slow);
+    QList<AudioSource> audioSources;
 
 private:
-    mpv_handle                       *m_mpv;
-    QNetworkAccessManager            *m_manager;
-    QHash<QString, QTemporaryFile *>  m_files;
-    QMutex                            m_fileLock;
+    mpv_handle *m_mpv;
+    QHash<QString, QTemporaryFile *> m_files;
+    QMutex m_fileLock;
 
     bool playFile(const QTemporaryFile *file);
 };
