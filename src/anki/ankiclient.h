@@ -122,7 +122,7 @@ public:
     AnkiReply *getDeckNames();
     AnkiReply *getModelNames();
     AnkiReply *getFieldNames(const QString &model);
-    AnkiReply *notesAddable (const QList<SubtitleExtract *>        &terms);
+    AnkiReply *noteAddable (const SubtitleExtract *term);
     AnkiReply *addNote      (const SubtitleExtract  *term);
     AnkiReply *openBrowse   (const QString &deck, const QString &query);
 

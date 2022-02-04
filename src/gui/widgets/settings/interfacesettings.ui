@@ -27,8 +27,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>728</width>
-        <height>747</height>
+        <width>743</width>
+        <height>730</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -122,7 +122,7 @@
             <item>
              <widget class="QFontComboBox" name="fontComboSub">
               <property name="writingSystem">
-               <enum>QFontDatabase::Japanese</enum>
+               <enum>QFontDatabase::Latin</enum>
               </property>
              </widget>
             </item>

@@ -151,14 +151,13 @@ void SubtitleWidget::mouseDoubleClickEvent(QMouseEvent *event)
 
 void SubtitleWidget::leaveEvent(QEvent *event)
 {
-    qDebug() << "leave event";
     QWidget::leaveEvent(event);
 }
 
 void SubtitleWidget::paintEvent(QPaintEvent *event)
 {
-    QElapsedTimer timer;
-    timer.start();
+    //QElapsedTimer timer;
+    //timer.start();
 
     QPainter painter(this);
     painter.setRenderHints(QPainter::Antialiasing);
@@ -217,7 +216,7 @@ void SubtitleWidget::paintEvent(QPaintEvent *event)
         throw std::runtime_error("did not use all char colors");
     }
 
-    qDebug() << "text render" << timer.elapsed();
+    //qDebug() << "text render" << timer.elapsed();
 }
 
 void SubtitleWidget::showEvent(QShowEvent *event)
@@ -236,7 +235,6 @@ void SubtitleWidget::hideEvent(QHideEvent *event)
 void SubtitleWidget::changeFont() {
     int fontSize = GlobalMediator::getGlobalMediator()->getPlayerWidget()->height() * 55 / 1080;
     if (this->font().pointSize() != fontSize || this->font().family() != SETTINGS_INTERFACE_SUB_FONT_DEFAULT) {
-        qDebug() << "set font size to" << fontSize;
         this->setFont(QFont(SETTINGS_INTERFACE_SUB_FONT_DEFAULT, fontSize));
     }
 }

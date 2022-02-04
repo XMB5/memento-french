@@ -589,11 +589,10 @@ AnkiReply *AnkiClient::requestStringList(const QString &action, const QJsonObjec
     return ankiReply;
 }
 
-AnkiReply *AnkiClient::notesAddable(const QList<SubtitleExtract *> &terms)
+AnkiReply *AnkiClient::noteAddable(const SubtitleExtract *term)
 {
     QJsonArray notes;
-    for (const SubtitleExtract *term : terms)
-        notes.append(createAnkiNoteObject(*term));
+    notes.append(createAnkiNoteObject(*term));
     QJsonObject params;
     params[ANKI_CAN_ADD_NOTES_PARAM] = notes;
     QNetworkReply *reply = makeRequest(ANKI_CAN_ADD_NOTES, params);

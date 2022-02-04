@@ -67,6 +67,9 @@ TermWidget::TermWidget(QWidget *parent) : QWidget(parent), m_ui(new Ui::TermWidg
         } 
     );
     connect(m_ui->buttonAudio, &QToolButton::customContextMenuRequested, this, &TermWidget::showAudioSources);
+
+    auto *ankiClient = GlobalMediator::getGlobalMediator()->getAnkiClient();
+    setAddable(ankiClient->isEnabled() && ankiClient->noteAddable(m_term));
 }
 
 TermWidget::~TermWidget()

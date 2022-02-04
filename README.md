@@ -1,5 +1,16 @@
 # Memento
 
+## TODO (in order of priority)
+- have subtitles up from bottom of screen so that in fullscreen when the toolbar appears it doesn't move the subs up
+- secondary subs
+- don't hide subs/hide bottom toolbar when term is open and mouse not on term
+- better phrases/idiom recongition?
+- anki integration
+- subtitle theming options
+- play from command line with mpv options
+- clean up code
+- term dark mode
+
 ## Overview
 
 Memento is a FOSS, mpv-based video player intended for studying Japanese.
